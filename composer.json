@@ -27,7 +27,7 @@
         }
     ],
     "autoload": {
-        "psr-0": { "HTML" : "HTML/" }
+        "psr-0": { "HTML" : "./" }
     },
     "support": {
         "issues": "http://pear.php.net/bugs/search.php?cmd=display&package_name[]=HTML_Table",
