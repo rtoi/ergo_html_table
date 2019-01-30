@@ -62,13 +62,6 @@
 
 
 /**
-* Requires PEAR, HTML_Common and HTML_Table_Storage
-*/
-require_once 'PEAR.php';
-require_once 'HTML/Common.php';
-require_once 'HTML/Table/Storage.php';
-
-/**
  * PEAR::HTML_Table makes the design of HTML tables easy, flexible, reusable and efficient.
  *
  * The PEAR::HTML_Table package provides methods for easy and efficient design
@@ -695,7 +688,7 @@ class HTML_Table extends HTML_Common {
      * @param    string    $type         (optional) Cell type either 'th' or 'td'
      * @param    bool      $inTR         false if attributes are to be applied
      *                                   in TD tags; true if attributes are to
-     *                                  ´be applied in TR tag
+     *                                  ï¿½be applied in TR tag
      * @param    int       $body         (optional) The index of the body to use.
      * @return   int
      * @access   public
