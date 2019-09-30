@@ -166,7 +166,7 @@ class HTML_Table extends HTML_Common {
      */
     function __construct($attributes = null, $tabOffset = 0, $useTGroups = false)
     {
-        HTML_Common::HTML_Common($attributes, (int)$tabOffset);
+        parent::__construct($attributes, (int)$tabOffset);
         $this->_useTGroups = (boolean)$useTGroups;
         $this->addBody();
         if ($this->_useTGroups) {
