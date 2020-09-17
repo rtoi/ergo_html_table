@@ -34,8 +34,8 @@
         "source": "https://github.com/pear/HTML_Table"
     },
     "require": {
-        "pear/pear-core-minimal": "^1.10.0",
-        "pear/html_common": "^1.2.5"
+        "pear/pear-core-minimal": "*",
+        "pear/html_common": "*"
     },
     "require-dev": {
         "pear/pear-core": "*"
