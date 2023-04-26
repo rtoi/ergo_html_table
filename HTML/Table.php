@@ -1,4 +1,5 @@
 <?php
+
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
@@ -85,8 +86,8 @@
  * @version    Release: @package_version@
  * @link       http://pear.php.net/package/HTML_Table
  */
-class HTML_Table extends HTML_Common {
-
+class HTML_Table extends HTML_Common
+{
     /**
      * Value to insert into empty cells. This is used as a default for
      * newly-created tbodies.
@@ -195,8 +196,10 @@ class HTML_Table extends HTML_Common {
     {
         if (is_null($this->_thead)) {
             $this->_useTGroups = true;
-            $this->_thead = new HTML_Table_Storage($this->_tabOffset,
-                                                    $this->_useTGroups);
+            $this->_thead = new HTML_Table_Storage(
+                $this->_tabOffset,
+                $this->_useTGroups
+            );
             for ($i = 0; $i < $this->_tbodyCount; $i++) {
                 $this->_tbodies[$i]->setUseTGroups(true);
             }
@@ -213,8 +216,10 @@ class HTML_Table extends HTML_Common {
     {
         if (is_null($this->_tfoot)) {
             $this->_useTGroups = true;
-            $this->_tfoot = new HTML_Table_Storage($this->_tabOffset,
-                                                    $this->_useTGroups);
+            $this->_tfoot = new HTML_Table_Storage(
+                $this->_tabOffset,
+                $this->_useTGroups
+            );
             for ($i = 0; $i < $this->_tbodyCount; $i++) {
                 $this->_tbodies[$i]->setUseTGroups(true);
             }
@@ -257,8 +262,10 @@ class HTML_Table extends HTML_Common {
         }
 
         $body = $this->_tbodyCount++;
-        $this->_tbodies[$body] = new HTML_Table_Storage($this->_tabOffset,
-                                                         $this->_useTGroups);
+        $this->_tbodies[$body] = new HTML_Table_Storage(
+            $this->_tabOffset,
+            $this->_useTGroups
+        );
         $this->_tbodies[$body]->setAutoFill($this->_autoFill);
         $this->_tbodies[$body]->setAttributes($attributes);
         return $body;
@@ -400,7 +407,7 @@ class HTML_Table extends HTML_Common {
                 return $ret;
             }
             return $this->_tbodies[$body]->getAutoGrow();
-        } 
+        }
         return $this->_autoGrow;
     }
 
@@ -453,7 +460,7 @@ class HTML_Table extends HTML_Common {
                 return $ret;
             }
             return $this->_tbodies[$body]->getRowCount();
-        } 
+        }
         $rowCount = 0;
         for ($i = 0; $i < $this->_tbodyCount; $i++) {
             $rowCount += $this->_tbodies[$i]->getRowCount();
@@ -650,9 +657,13 @@ class HTML_Table extends HTML_Common {
      * @access   public
      * @throws   PEAR_Error
      */
-    public function setHeaderContents(int $row, int $col, $contents, string|array $attributes = null,
-        int $body = 0)
-    {
+    public function setHeaderContents(
+        int $row,
+        int $col,
+        $contents,
+        string|array $attributes = null,
+        int $body = 0
+    ) {
         $ret = $this->_adjustTbodyCount($body, 'setHeaderContents');
         if (PEAR::isError($ret)) {
             return $ret;
@@ -678,9 +689,13 @@ class HTML_Table extends HTML_Common {
      * @access   public
      * @throws   PEAR_Error
      */
-    public function addRow(array $contents = null, string|array $attributes = null, string $type = 'td',
-        bool $inTR = false, int $body = 0)
-    {
+    public function addRow(
+        array $contents = null,
+        string|array $attributes = null,
+        string $type = 'td',
+        bool $inTR = false,
+        int $body = 0
+    ) {
         $ret = $this->_adjustTbodyCount($body, 'addRow');
         if (PEAR::isError($ret)) {
             return $ret;
@@ -727,9 +742,12 @@ class HTML_Table extends HTML_Common {
      * @access   public
      * @throws   PEAR_Error
      */
-    public function updateRowAttributes(int $row, string|array $attributes = null, bool $inTR = false,
-        int $body = 0)
-    {
+    public function updateRowAttributes(
+        int $row,
+        string|array $attributes = null,
+        bool $inTR = false,
+        int $body = 0
+    ) {
         $ret = $this->_adjustTbodyCount($body, 'updateRowAttributes');
         if (PEAR::isError($ret)) {
             return $ret;
@@ -775,21 +793,35 @@ class HTML_Table extends HTML_Common {
      * @access  public
      * @throws  PEAR_Error
      */
-    public function altRowAttributes(int $start, string|array $attributes1, 
-        string|array $attributes2, bool $inTR = false, int $firstAttributes = 1, 
-        int $body = null)
-    {
+    public function altRowAttributes(
+        int $start,
+        string|array $attributes1,
+        string|array $attributes2,
+        bool $inTR = false,
+        int $firstAttributes = 1,
+        int $body = null
+    ) {
         if (!is_null($body)) {
             $ret = $this->_adjustTbodyCount($body, 'altRowAttributes');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            $this->_tbodies[$body]->altRowAttributes($start, $attributes1,
-                $attributes2, $inTR, $firstAttributes);
+            $this->_tbodies[$body]->altRowAttributes(
+                $start,
+                $attributes1,
+                $attributes2,
+                $inTR,
+                $firstAttributes
+            );
         } else {
             for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->altRowAttributes($start, $attributes1,
-                    $attributes2, $inTR, $firstAttributes);
+                $this->_tbodies[$i]->altRowAttributes(
+                    $start,
+                    $attributes1,
+                    $attributes2,
+                    $inTR,
+                    $firstAttributes
+                );
                 // if the tbody's row count is odd, toggle $firstAttributes to
                 // prevent the next tbody's first row from having the same
                 // attributes as this tbody's last row.
@@ -812,9 +844,12 @@ class HTML_Table extends HTML_Common {
      * @access   public
      * @throws   PEAR_Error
      */
-    public function addCol(array $contents = null, string|array $attributes = null, 
-        string $type = 'td', int $body = 0)
-    {
+    public function addCol(
+        array $contents = null,
+        string|array $attributes = null,
+        string $type = 'td',
+        int $body = 0
+    ) {
         $ret = $this->_adjustTbodyCount($body, 'addCol');
         if (PEAR::isError($ret)) {
             return $ret;

@@ -1,4 +1,5 @@
 <?php
+
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
@@ -68,8 +69,8 @@ require_once 'vendor/autoload.php';
  * @version    Release: @package_version@
  * @link       http://pear.php.net/package/HTML_Table
  */
-class HTML_Table_Storage extends HTML_Common {
-
+class HTML_Table_Storage extends HTML_Common
+{
     /**
      * Value to insert into empty cells
      * @var    string
@@ -289,9 +290,10 @@ class HTML_Table_Storage extends HTML_Common {
      */
     public function setCellAttributes(int $row, int $col, string|array $attributes = null)
     {
-        if (   isset($this->_structure[$row][$col])
+        if (
+            isset($this->_structure[$row][$col])
             && $this->_structure[$row][$col] == '__SPANNED__'
-           ) {
+        ) {
              return;
         }
         $attributes = $this->_parseAttributes($attributes);
@@ -314,9 +316,10 @@ class HTML_Table_Storage extends HTML_Common {
      */
     public function updateCellAttributes(int $row, int $col, string|array $attributes = null)
     {
-        if (   isset($this->_structure[$row][$col])
+        if (
+            isset($this->_structure[$row][$col])
             && $this->_structure[$row][$col] == '__SPANNED__'
-           ) {
+        ) {
             return;
         }
         $attributes = $this->_parseAttributes($attributes);
@@ -338,9 +341,10 @@ class HTML_Table_Storage extends HTML_Common {
      */
     public function getCellAttributes(int $row, int $col): array
     {
-        if (   isset($this->_structure[$row][$col])
+        if (
+            isset($this->_structure[$row][$col])
             && $this->_structure[$row][$col] != '__SPANNED__'
-           ) {
+        ) {
             if (isset($this->_structure[$row][$col]['attr'])) {
                 return $this->_structure[$row][$col]['attr'];
             } else {
@@ -375,8 +379,12 @@ class HTML_Table_Storage extends HTML_Common {
     {
         if (is_array($contents)) {
             foreach ($contents as $singleContent) {
-                $ret = $this->_setSingleCellContents($row, $col, $singleContent,
-                                                     $type);
+                $ret = $this->_setSingleCellContents(
+                    $row,
+                    $col,
+                    $singleContent,
+                    $type
+                );
                 if (PEAR::isError($ret)) {
                     return $ret;
                 }
@@ -410,9 +418,10 @@ class HTML_Table_Storage extends HTML_Common {
      */
     public function _setSingleCellContents(int $row, int $col, $contents, string $type = 'TD')
     {
-        if (isset($this->_structure[$row][$col])
+        if (
+            isset($this->_structure[$row][$col])
             && $this->_structure[$row][$col] == '__SPANNED__'
-           ) {
+        ) {
             return;
         }
         $err = $this->_adjustEnds($row, $col, 'setCellContents');
@@ -432,9 +441,10 @@ class HTML_Table_Storage extends HTML_Common {
      */
     public function getCellContents(int $row, int $col)
     {
-        if (   isset($this->_structure[$row][$col])
+        if (
+            isset($this->_structure[$row][$col])
             && $this->_structure[$row][$col] == '__SPANNED__'
-           ) {
+        ) {
             return;
         }
         if (!isset($this->_structure[$row][$col])) {
@@ -478,15 +488,18 @@ class HTML_Table_Storage extends HTML_Common {
      * @return   int
      * @access   public
      */
-    public function addRow(array $contents = null, string|array $attributes = null, 
-        string $type = 'td', bool $inTR = false): int
-    {
+    public function addRow(
+        array $contents = null,
+        string|array $attributes = null,
+        string $type = 'td',
+        bool $inTR = false
+    ): int {
         if (isset($contents) && !is_array($contents)) {
             return PEAR::raiseError('First parameter to HTML_Table::addRow ' .
                                     'must be an array');
         }
         if (is_null($contents)) {
-          $contents = array();
+            $contents = array();
         }
 
         $type = strtolower($type);
@@ -521,8 +534,11 @@ class HTML_Table_Storage extends HTML_Common {
             $multiAttr = $this->_isAttributesArray($attributes);
             for ($i = 0; $i < $this->_cols; $i++) {
                 if ($multiAttr) {
-                    $this->setCellAttributes($row, $i,
-                        $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]);
+                    $this->setCellAttributes(
+                        $row,
+                        $i,
+                        $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]
+                    );
                 } else {
                     $this->setCellAttributes($row, $i, $attributes);
                 }
@@ -554,8 +570,11 @@ class HTML_Table_Storage extends HTML_Common {
             $multiAttr = $this->_isAttributesArray($attributes);
             for ($i = 0; $i < $this->_cols; $i++) {
                 if ($multiAttr) {
-                    $this->updateCellAttributes($row, $i,
-                        $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]);
+                    $this->updateCellAttributes(
+                        $row,
+                        $i,
+                        $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]
+                    );
                 } else {
                     $this->updateCellAttributes($row, $i, $attributes);
                 }
@@ -600,9 +619,13 @@ class HTML_Table_Storage extends HTML_Common {
      *                                      applied to the first row, 1 or 2.
      * @access   public
      */
-    public function altRowAttributes(int $start, string|array $attributes1, string|array $attributes2, 
-        bool $inTR = false, int $firstAttributes = 1): void
-    {
+    public function altRowAttributes(
+        int $start,
+        string|array $attributes1,
+        string|array $attributes2,
+        bool $inTR = false,
+        int $firstAttributes = 1
+    ): void {
         for ($row = $start; $row < $this->_rows; $row++) {
             if (($row + $start + ($firstAttributes - 1)) % 2 == 0) {
                 $attributes = $attributes1;
@@ -630,7 +653,7 @@ class HTML_Table_Storage extends HTML_Common {
                                     'must be an array');
         }
         if (is_null($contents)) {
-          $contents = array();
+            $contents = array();
         }
 
         $type = strtolower($type);
@@ -658,8 +681,11 @@ class HTML_Table_Storage extends HTML_Common {
         $multiAttr = $this->_isAttributesArray($attributes);
         for ($i = 0; $i < $this->_rows; $i++) {
             if ($multiAttr) {
-                $this->setCellAttributes($i, $col,
-                    $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]);
+                $this->setCellAttributes(
+                    $i,
+                    $col,
+                    $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]
+                );
             } else {
                 $this->setCellAttributes($i, $col, $attributes);
             }
@@ -678,8 +704,11 @@ class HTML_Table_Storage extends HTML_Common {
         $multiAttr = $this->_isAttributesArray($attributes);
         for ($i = 0; $i < $this->_rows; $i++) {
             if ($multiAttr) {
-                $this->updateCellAttributes($i, $col,
-                    $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]);
+                $this->updateCellAttributes(
+                    $i,
+                    $col,
+                    $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]
+                );
             } else {
                 $this->updateCellAttributes($i, $col, $attributes);
             }
@@ -733,13 +762,13 @@ class HTML_Table_Storage extends HTML_Common {
             $extraTab = '';
         }
         if ($this->_cols > 0) {
-            for ($i = 0 ; $i < $this->_rows ; $i++) {
+            for ($i = 0; $i < $this->_rows; $i++) {
                 $attr = '';
                 if (isset($this->_structure[$i]['attr'])) {
                     $attr = $this->_getAttrString($this->_structure[$i]['attr']);
                 }
-                $strHtml .= $tabs .$tab . $extraTab . '<tr'.$attr.'>' . $lnEnd;
-                for ($j = 0 ; $j < $this->_cols ; $j++) {
+                $strHtml .= $tabs . $tab . $extraTab . '<tr' . $attr . '>' . $lnEnd;
+                for ($j = 0; $j < $this->_cols; $j++) {
                     $attr     = [];
                     $contents = '';
                     $type     = 'td';
@@ -871,5 +900,4 @@ class HTML_Table_Storage extends HTML_Common {
         }
         return false;
     }
-
 }
