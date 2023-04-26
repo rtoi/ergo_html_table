@@ -3,11 +3,11 @@
 --FILE--
 <?php
 // $Id$
-require_once 'HTML/Table.php';
+require_once 'vendor/autoload.php';
 $table = new HTML_Table();
 
-$tbody =& $table->getBody();
-$tfoot =& $table->getFooter();
+$tbody = $table->getBody();
+$tfoot = $table->getFooter();
 
 $data[0][] = 'Test';
 $data[1][] = 'Test';

@@ -3,12 +3,12 @@
 --FILE--
 <?php
 // $Id$
-require_once 'HTML/Table.php';
+require_once 'vendor/autoload.php';
 $table = new HTML_Table();
 
-$thead =& $table->getHeader();
-$tfoot =& $table->getFooter();
-$tbody =& $table->getBody();
+$thead = $table->getHeader();
+$tfoot = $table->getFooter();
+$tbody = $table->getBody();
 
 $data[0][] = 'Test';
 $data[1][] = 'Test';

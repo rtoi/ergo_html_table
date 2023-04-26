@@ -3,7 +3,7 @@ bug #20546: Undefined index: attr when calling getCellAttributes on cell without
 --FILE--
 <?php
 // $Id$
-require_once 'HTML/Table.php';
+require_once 'vendor/autoload.php';
 $table = new HTML_Table();
 
 $table->addRow(array('dummy'));

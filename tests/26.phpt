@@ -3,12 +3,12 @@
 --FILE--
 <?php
 // $Id$
-require_once 'HTML/Table.php';
+require_once 'vendor/autoload.php';
 $table = new HTML_Table('width="400"');
 
-$thead =& $table->getHeader();
-$tfoot =& $table->getFooter();
-$tbody =& $table->getBody();
+$thead = $table->getHeader();
+$tfoot = $table->getFooter();
+$tbody = $table->getBody();
 
 $thead->setHeaderContents(2, 2, 'some th content', 'bgcolor="red"');
 $tfoot->setHeaderContents(1, 1, 'another th content', 'bgcolor="yellow"');

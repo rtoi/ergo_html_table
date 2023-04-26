@@ -3,7 +3,7 @@
 --FILE--
 <?php
 // $Id$
-require_once 'HTML/Table.php';
+require_once 'vendor/autoload.php';
 $table = new HTML_Table();
 
 $colgroup = array('style="font-size:120%;"', 'class="col2"', 'align="right"');

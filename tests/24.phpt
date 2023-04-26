@@ -3,16 +3,16 @@
 --FILE--
 <?php
 // $Id$
-require_once 'HTML/Table.php';
+require_once 'vendor/autoload.php';
 $table = new HTML_Table();
 
-$thead =& $table->getHeader();
-$tfoot =& $table->getFooter();
+$thead = $table->getHeader();
+$tfoot = $table->getFooter();
 
-$tbody1 =& $table->getBody(1);
+$tbody1 = $table->getBody(1);
 $tbody1->setAttribute('id', 'tbody1');
 
-$tbody2 =& $table->getBody(2);
+$tbody2 = $table->getBody(2);
 $tbody2->setAttribute('id', 'tbody2');
 
 $data[0][] = 'Test';
