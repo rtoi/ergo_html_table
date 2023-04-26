@@ -33,11 +33,16 @@
         "issues": "http://pear.php.net/bugs/search.php?cmd=display&package_name[]=HTML_Table",
         "source": "https://github.com/pear/HTML_Table"
     },
+    "repositories": [
+        {
+            "name" : "pear/html_common",
+            "type" : "vcs",
+            "url" : "https://github.com/MisterIcy/HTML_Common.git"
+        }
+    ],
+	"minimum-stability" : "dev",    
     "require": {
         "pear/pear-core-minimal": "*",
         "pear/html_common": "*"
-    },
-    "require-dev": {
-        "pear/pear-core": "*"
     }
 }
