@@ -51,7 +51,6 @@
  * @link       http://pear.php.net/package/HTML_Table
  */
 
-require_once 'vendor/autoload.php';
 /**
  * Storage class for HTML::Table data
  *
@@ -306,6 +305,103 @@ class HTML_Table_Storage extends HTML_Common
     }
 
     /**
+     * Searches for a "span base" for a cell.
+     *
+     *
+     * @param \HTML_Table_storage $section
+     * @param int $row
+     * @param int $col
+     * @param string $insert Set if there are added cells above the row. i.e. We are
+     *                       in a middle of the insertCol process.
+     * @return array Formatted like ['row' => i, 'col' => j]
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function spanBase(int $row, int $col, bool $insert = false): array
+    {
+        if (!$this->isCellSpanned($row, $col)) {
+            return [$row, $col];
+        }
+        $rowOrig = $row;
+        $colOrig = $col;
+        while ($row >= 0) {
+            $col = $colOrig + ($row < $rowOrig && $insert) * 1;
+            while ($col >= 0) {
+                if (!$this->isCellSpanned($row, $col)) {
+                    $colspan = $this->_structure[$row][$col]['attr']['colspan'] ?? 1;
+                    $rowspan = $this->_structure[$row][$col]['attr']['rowspan'] ?? 1;
+                    if (($row + $rowspan - 1) >= $rowOrig && ($col + $colspan - 1) >= $colOrig) {
+                        return [$row, $col - ($row < $rowOrig && $insert) * 1];
+                    }
+                    break;
+                }
+                $col--;
+            }
+            $row--;
+        }
+        trigger_error('Malformatted table. Spanned cell does not have a base.');
+    }
+
+    /**
+     * Splits merged cell horizontally.
+     *
+     * This affects cells, which are under the influence of a rowspan attribute.
+     *
+     * @param int $row
+     * @param int $col
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function splitSpanHorizontal(int $row, int $col): void
+    {
+        [$rowS, $colS] = $this->spanBase($row, $col);
+        if ($row === $rowS) {
+            return;
+        }
+        $rowSpanBase = $this->_structure[$rowS][$colS]['attr']['rowspan'] ?? 1;
+        $rowSpanNew = ($rowS + $rowSpanBase - 1) - $row + 1;
+        $rowSpanUpdated = $row - $rowS;
+        $this->_updateAttrArray($this->_structure[$rowS][$colS]['attr'], ['rowspan' => $rowSpanUpdated]);
+        $this->tidyAttr($this->_structure[$rowS][$colS]);
+        $cellBase = $this->_structure[$rowS][$colS];
+        $this->_structure[$row][$colS] = ['type' => '', 'contents' => '', 'attr' => []];
+        $this->_structure[$row][$colS]['type'] = $cellBase['type'];
+        $this->_structure[$row][$colS]['attr'] = $cellBase['attr'];
+        $this->_updateAttrArray($this->_structure[$row][$colS]['attr'], ['rowspan' => $rowSpanNew]);
+        $this->tidyAttr($this->_structure[$row][$colS]);
+        $this->_updateSpanGrid($row, $colS);
+    }
+
+    /**
+     * Splits merged cell vertically.
+     *
+     * This affects cells, which are under the influence of a colspan attribute.
+     *
+     * @param int $row
+     * @param int $col
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function splitSpanVertical(int $row, int $col): void
+    {
+        [$rowS, $colS] = $this->spanBase($row, $col);
+        if ($col === $colS) {
+            return;
+        }
+        $colSpanBase = $this->_structure[$rowS][$colS]['attr']['colspan'] ?? 1;
+        $colSpanNew = ($colS + $colSpanBase - 1) - $col + 1;
+        $colSpanUpdated = $col - $colS;
+        $this->_updateAttrArray($this->_structure[$rowS][$colS]['attr'], ['colspan' => $colSpanUpdated]);
+        $this->tidyAttr($this->_structure[$rowS][$colS]);
+        $cellBase = $this->_structure[$rowS][$colS];
+        $this->_structure[$rowS][$col] = ['type' => '', 'contents' => '', 'attr' => []];
+        $this->_structure[$rowS][$col]['type'] = $cellBase['type'];
+        $this->_structure[$rowS][$col]['attr'] = $cellBase['attr'];
+        $this->_updateAttrArray($this->_structure[$rowS][$col]['attr'], ['colspan' => $colSpanNew]);
+        $this->tidyAttr($this->_structure[$rowS][$col]);
+        $this->_updateSpanGrid($row, $colS);
+    }
+
+    /**
      * Updates the cell attributes passed but leaves other existing attributes
      * intact
      * @param    int     $row         Row index
@@ -416,7 +512,7 @@ class HTML_Table_Storage extends HTML_Common
      * @access   private
      * @throws   PEAR_Error
      */
-    public function _setSingleCellContents(int $row, int $col, $contents, string $type = 'TD')
+    private function _setSingleCellContents(int $row, int $col, $contents, string $type = 'TD')
     {
         if (
             isset($this->_structure[$row][$col])
@@ -433,7 +529,9 @@ class HTML_Table_Storage extends HTML_Common
     }
 
     /**
-     * Returns the cell contents for an existing cell
+     * Returns the cell contents for an existing cell.
+     * For __SPANNED__ cell returns null.
+     *
      * @param    int        $row    Row index
      * @param    int        $col    Column index
      * @access   public
@@ -445,13 +543,444 @@ class HTML_Table_Storage extends HTML_Common
             isset($this->_structure[$row][$col])
             && $this->_structure[$row][$col] == '__SPANNED__'
         ) {
-            return;
+            return null;
         }
         if (!isset($this->_structure[$row][$col])) {
             return PEAR::raiseError('Invalid table cell reference[' .
                 $row . '][' . $col . '] in HTML_Table::getCellContents');
         }
         return $this->_structure[$row][$col]['contents'];
+    }
+
+    /**
+     * Tests if the cell is spanned.
+     *
+     * @param   int $row
+     * @param   int $col
+     * @return  bool|null   Returns null if cell specified by $row & $col arguments
+     *                      does not exist.
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function isCellSpanned(int $row, int $col): ?bool
+    {
+        if (!isset($this->_structure[$row][$col])) {
+            return null;
+        }
+        return $this->_structure[$row][$col] === '__SPANNED__';
+    }
+
+
+    /**
+     * Splits all rowspan cells on a row.
+     *
+     * @param int $row
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function splitAtRow(int $row): void
+    {
+        if ($row < 0 || ($row + 1) > $this->getRowCount()) {
+            return;
+        }
+        $col = 0;
+        while ($col < $this->getColCount()) {
+            [$rowS, $colS] = $this->spanBase($row, $col);
+            if ($rowS < $row) {
+                $this->splitSpanHorizontal($row, $col);
+            }
+            $col++;
+        }
+    }
+
+    /**
+     * Splits all colspan cells on a column.
+     *
+     * @param int $col
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function splitAtCol(int $col): void
+    {
+        if ($col < 0 || ($col + 1) > $this->getColCount()) {
+            return;
+        }
+        $row = 0;
+        while ($row < $this->getRowCount()) {
+            [$rowS, $colS] = $this->spanBase($row, $col);
+            if ($colS < $col) {
+                $this->splitSpanVertical($row, $col);
+            }
+            $row++;
+        }
+    }
+
+    /**
+     * Removes rows from table and retuns them in an array.
+     *
+     * @param int $rowStart
+     * @param int|null $rowEnd
+     * @return array
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function cutRows(int $rowStart, ?int $rowEnd = null): array
+    {
+        $rowEnd = $rowEnd ?? $rowStart;
+        if ($rowStart < 0 || ($rowEnd + 1) > $this->getRowCount()) {
+            trigger_error('row arguments out of bounds.', E_USER_ERROR);
+        }
+        $length = $rowEnd - $rowStart + 1;
+        $this->splitAtRow($rowEnd + 1);
+        $this->splitAtRow($rowStart);
+        $this->setRowCount($this->getRowCount() - $length);
+        return array_splice($this->_structure, $rowStart, $length);
+    }
+
+    /**
+     * Pastes rows cut with cutRows() into table.
+     *
+     * @param array $arr
+     * @param int|null $atRow
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function pasteRows(array $arr, ?int $atRow = null): void
+    {
+        $atRow = $atRow ?? $this->getRowCount();
+        $atRow = $atRow < 0 ? 0 : $atRow;
+        if ($atRow < 0 || $atRow > $this->getRowCount()) {
+            trigger_error("atRow argument (val = $atRow) out of bounds.", E_USER_ERROR);
+        }
+        $this->splitAtRow($atRow);
+        $tmp = [];
+        if ($atRow <= $this->getRowCount() - 1) {
+            $tmp = array_splice($this->_structure, $atRow);
+        }
+        $this->_structure = array_merge($this->_structure, $arr);
+        if (count($tmp)) {
+            $this->_structure = array_merge($this->_structure, $tmp);
+        }
+        $this->setRowCount($this->getRowCount() + count($arr));
+    }
+
+    /**
+     * Removes one or more columns from table and returns removed columns
+     * as an array.
+     *
+     * NOTE: Be careful with this method. Value of $length parameter is not
+     * tested. This should be called only after calling splitAtCol method first.
+     * Calling splitAtCol first ensures colspan attributes are set right.
+     *
+     * @param int       $col    First column to be removed.
+     * @param int|null  $length How many columns to remove. If null, removes
+     *                          all columns from $col to end of the table.
+     * @return array            Removed columns.
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    private function sliceAtCol(int $col, ?int $length = null): array
+    {
+        if ($col < 0 || $col >= $this->getColCount()) {
+            trigger_error("col argument (val = $col) is out of bounds.", E_USER_ERROR);
+        }
+        $length = $length ?? $this->getColCount() - $col;
+        $row = 0;
+        $out = [];
+        while ($row < $this->getRowCount()) {
+            $attr = $this->_structure[$row]['attr'] ?? [];
+            unset($this->_structure[$row]['attr']);
+            $out[] =  array_splice($this->_structure[$row], $col, $length);
+            if (count($attr)) {
+                $this->_structure[$row]['attr'] = $attr;
+            }
+            $row++;
+        }
+        return $out;
+    }
+
+    /**
+     * Cuts one or more columns from table and return them in an array.
+     *
+     * Columns cut from table can later be pasted back to Storage object with
+     * pasteCols method.
+     *
+     * @param int       $colStart   First column to be cut from table
+     * @param int|null  $colEnd     Last column to be cut from table. If this is not
+     *                              set, only one column is cut.
+     * @return array                Columns cut from table in an array.
+     * @see HTML_Table_Storage::pasteCols
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function cutCols(int $colStart, ?int $colEnd = null): array
+    {
+        $colEnd = $colEnd ?? $colStart;
+        if ($colStart < 0 || ($colEnd + 1) > $this->getColCount()) {
+            trigger_error('row arguments out of bounds.', E_USER_ERROR);
+        }
+        $noCols = $this->getColCount();
+        $length = $colEnd - $colStart + 1;
+        $this->splitAtCol($colEnd + 1);
+        $this->splitAtCol($colStart);
+        $out = $this->sliceAtCol($colStart, $length);
+        $this->setColCount($noCols - $length);
+        return $out;
+    }
+
+    /**
+     * Adds one or more columns onto the end of table.
+     *
+     * @param array $arr Array of columns to be added to table.
+     *                   Array is expected to have right number of rows.
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    private function appendCols(array $arr): void
+    {
+        $row = 0;
+        while ($row < $this->getRowCount()) {
+            $attr = $this->_structure[$row]['attr'] ?? [];
+            unset($this->_structure[$row]['attr']);
+            $this->_structure[$row] = array_merge($this->_structure[$row], $arr[$row]);
+            if (count($attr)) {
+                $this->_structure[$row]['attr'] = $attr;
+            }
+            $row++;
+        }
+    }
+
+    /**
+     * Removes unnecessary attributes from a table cell.
+     *
+     * @param array $cell
+     * @return array        Cleaned table cell.
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    private function tidyAttr(array &$cell): void
+    {
+        if (in_array('__SPANNED__', $cell)) {
+            return;
+        }
+        if (isset($cell['attr']) && count($cell['attr']) === 0) {
+            unset($cell['attr']);
+            return;
+        }
+        $rowSpan = $cell['attr']['rowspan'] ?? 1;
+        $colSpan = $cell['attr']['colspan'] ?? 1;
+        if ($rowSpan === 1) {
+            unset($cell['attr']['rowspan']);
+        }
+        if ($colSpan === 1) {
+            unset($cell['attr']['colspan']);
+        }
+    }
+
+    /**
+     *
+     * @param string|array $cell
+     * @param int $row
+     * @param int|null $col
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    private function pushToRow(string|array $cell, int $row, ?int $col = null): void
+    {
+        $col = $col ?? $this->getColCount();
+        if ($row < 0 || $row > $this->getRowCount()) {
+            return;
+        }
+        if (is_string($cell)) {
+            $cell = $cell !== '__SPANNED__' ? ['contents' => $cell] : ['__SPANNED__'];
+        } elseif (array_key_exists('contents', $cell) || array_key_exists('attr', $cell)) {
+            $this->tidyAttr($cell);
+            $cell = [$cell];
+        }
+        $attr = $this->_structure[$row]['attr'] ?? [];
+        unset($this->_structure[$row]['attr']);
+        $arr1 = $col > 0 ? array_slice($this->_structure[$row], 0, $col) : [];
+        $arr2 = $col < $this->getColCount() ? array_slice($this->_structure[$row], $col) : [];
+        $this->_structure[$row] = array_merge($arr1, $cell, $arr2);
+        if (count($attr)) {
+            $this->_structure[$row]['attr'] = $attr;
+        }
+    }
+
+    /**
+     * Paste columns to table at specific location.
+     *
+     * @param array     $arr    One or more columns to pasted. Most likely,
+     *                          the array is obtained from the cutCols method..
+     * @param int|null  $atCol  Starting from which column the new columns are to
+     *                          pasted. Old columns are moved right. If atCol is not
+     *                          set, new columns are appended to the end of table.
+     * @return void
+     * @see HTML_Table_storage::cutCols()
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function pasteCols(array $arr, ?int $atCol = null): void
+    {
+        $atCol = $atCol ?? $this->getColCount();
+        if ($atCol < 0 || $atCol > $this->getColCount()) {
+            trigger_error("atCol argument (val = $atCol) out of bounds.", E_USER_ERROR);
+        }
+        if (count($arr) !== $this->getRowCount()) {
+            trigger_error("Row count of arr argument is wrong.", E_USER_ERROR);
+        }
+        $this->splitAtCol($atCol);
+        $tmp = [];
+        if ($atCol <= $this->getColCount() - 1) {
+            $tmp = $this->sliceAtCol($atCol);
+        }
+        $this->appendCols($arr);
+        if (count($tmp)) {
+            $this->appendCols($tmp);
+        }
+        $this->setColCount($this->getColCount() + count($arr[0]));
+    }
+
+    /**
+     * Merges two adjacent cells.
+     *
+     * Cells to be merged have to be either on the same row
+     * or on the same column. If rows are on the same column,
+     * they have to have the same colspan value. Correspondingly
+     * cells on the same row have to have the same rowspan value.
+     *
+     * @param   int         $row1
+     * @param   int         $col1
+     * @param   int         $row2
+     * @param   int         $col2
+     * @param   string|null $glue   String used to combine the strings from the merged
+     *                              cells. Defaults to '<br>' or ' '.
+     * @return  void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function mergeCells(int $row1, int $col1, int $row2, int $col2, ?string $glue = null)
+    {
+        [$rowS1, $colS1] = $this->spanBase($row1, $col1);
+        [$rowS2, $colS2] = $this->spanBase($row2, $col2);
+        $vertical = ($colS1 === $colS2);
+        $horizontal = ($rowS1 === $rowS2);
+        if (($vertical && $horizontal) || (!$vertical && !$horizontal)) {
+            return;
+        }
+        $colSpan1 = $this->_structure[$rowS1][$colS1]['attr']['colspan'] ?? 1;
+        $rowSpan1 = $this->_structure[$rowS1][$colS1]['attr']['rowspan'] ?? 1;
+        $colSpan2 = $this->_structure[$rowS2][$colS2]['attr']['colspan'] ?? 1;
+        $rowSpan2 = $this->_structure[$rowS2][$colS2]['attr']['rowspan'] ?? 1;
+        if (
+            ($vertical && ($colSpan1 !== $colSpan2)) ||
+            ($horizontal && ($rowSpan1 !== $rowSpan2))
+        ) {
+            return;
+        }
+        $firstCell =  ($horizontal) ? ($colS2 > $colS1) : ($rowS2 > $rowS1);
+        $c1 = $firstCell ? $colS1 : $colS2;
+        $r1 = $firstCell ? $rowS1 : $rowS2;
+        $c2 = $firstCell ? $colS2 : $colS1;
+        $r2 = $firstCell ? $rowS2 : $rowS1;
+        $cSpan1 = $firstCell ? $colSpan1 : $colSpan2;
+        $rSpan1 = $firstCell ? $rowSpan1 : $rowSpan2;
+        if (
+            ($vertical && ($rowS1 + $rSpan1 !== $rowS2)) ||
+            ($horizontal && ($colS1 + $cSpan1 !== $colS2))
+        ) {
+            return;
+        }
+        $glue = $glue ?? ($horizontal ? ' ' : '<br>');
+        $glue = strlen($this->_structure[$r1][$c1]['contents']) ? $glue : '';
+        if (strlen($this->_structure[$r2][$c2]['contents'])) {
+            $this->_structure[$r1][$c1]['contents'] .= $glue . $this->_structure[$r2][$c2]['contents'];
+        }
+        if ($horizontal) {
+            $this->_structure[$r1][$c1]['attr']['colspan'] = $colSpan1 + $colSpan2;
+        } else {
+            $this->_structure[$r1][$c1]['attr']['rowspan'] = $rowSpan1 + $rowSpan2;
+        }
+        $this->tidyAttr($this->_structure[$r1][$c1]);
+        $this->tidyAttr($this->_structure[$r2][$c2]);
+        $this->_structure[$r2][$c2] = '__SPANNED__';
+    }
+
+    /**
+     * Combines one column with the on on its right side.
+     *
+     * @param int       $col    The column to be merged.
+     * @param string    $glue   String used as glue when merging cells. If the cell
+     *                          of the first column is empty, glue is not used.
+     * @param string    $indent This string is used as glue when the first cell is empty.
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function mergeColToRight(int $col, string $glue = ' ', string $indent = ''): void
+    {
+        if ($col < 0 || ($col + 1) >= $this->getColCount()) {
+            return;
+        }
+        $this->splitAtCol($col);
+        $row = 0;
+        while ($row < $this->getRowCount()) {
+            [$sR1, $sC1] = $this->spanBase($row, $col);
+            [$sR2, $sC2] = $this->spanBase($row, $col + 1);
+            if ([$sR1, $sC1] === [$sR2, $sC2]) {
+                $row++;
+                continue;
+            }
+            if (($row + 1) <= $this->getRowCount()) {
+                $this->splitSpanHorizontal($row + 1, $col);
+                $this->splitSpanHorizontal($row + 1, $col + 1);
+            }
+            if (
+                strlen($indent) &&
+                !$this->isCellSpanned($row, $col) &&
+                strlen(trim($this->_structure[$row][$col]['contents'])) === 0
+            ) {
+                $this->_structure[$row][$col]['contents'] = $indent;
+                $glue = '';
+            }
+            $this->mergeCells($row, $col, $row, $col + 1, $glue);
+            $row++;
+        }
+    }
+
+    /**
+     * Inserts an empty column into the table.
+     *
+     * @param null|int $col New empty column is inserted to this column id. If
+     *                      null, then column is inserted at the end of the table.
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function insertCol(?int $col = null, string $type = 'TD'): void
+    {
+        $col = $col ?? $this->getColCount();
+        if ($col < 0 || $col > $this->getColCount()) {
+            return;
+        }
+        $row = 0;
+        while ($row < $this->getRowCount()) {
+            if ($col === $this->getColCount()) {
+                $this->pushToRow(['contents' => '', 'type' => $type], $row);
+                $row++;
+                continue;
+            }
+
+            [$sR, $sC] = $this->spanBase($row, $col, true);
+            $sColSpan = $this->_structure[$sR][$sC]['attr']['colspan'] ?? 1;
+            $attr = $this->getCellAttributes($row, $col);
+            unset($attr['rowspan']);
+            unset($attr['colspan']);
+            if ($sC === $col) {
+                $cell = ['contents' => '', 'attr' => $attr, 'type' => $type];
+                $this->pushToRow($cell, $row, $col);
+                $row++;
+                continue;
+            }
+            $cell = '__SPANNED__';
+            if ($sR === $row) {
+                $this->_structure[$row][$sC]['attr']['colspan'] = $sColSpan + 1;
+            }
+            $this->pushToRow($cell, $row, $col);
+            $row++;
+        }
+        $this->setColCount($this->getColCount() + 1);
     }
 
     /**

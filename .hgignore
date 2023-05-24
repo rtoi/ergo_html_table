@@ -1,0 +1,6 @@
+syntax: glob
+HTML/Table/php_error.log
+composer.lock
+nbproject/
+vendor/
+run-tests.php

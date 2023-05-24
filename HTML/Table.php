@@ -323,6 +323,11 @@ class HTML_Table extends HTML_Common
         }
     }
 
+    public function getColGroup(): array
+    {
+        return $this->_colgroup ?? [];
+    }
+
     /**
      * Sets the autoFill value
      * @param   mixed   $fill          Whether autoFill should be enabled or not
