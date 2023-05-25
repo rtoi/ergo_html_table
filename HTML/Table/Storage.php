@@ -660,6 +660,10 @@ class HTML_Table_Storage extends HTML_Common
             $this->_structure = array_merge($this->_structure, $tmp);
         }
         $this->setRowCount($this->getRowCount() + count($arr));
+        if ($this->getRowCount() === 1) {
+            $noCols = array_key_exists('attr', $arr[0]) ? count($arr[0]) - 1 : count($arr[0]);
+            $this->setColCount($noCols);
+        }
     }
 
     /**
