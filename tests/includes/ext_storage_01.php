@@ -1,6 +1,8 @@
 <?php
 
-$storage = new HTML_Table_Storage();
+if (!isset($storage)) {
+    $storage = new HTML_Table_Storage();
+}
 
 $data[0][] = 'Foo';
 $data[0][] = 'Bar';
