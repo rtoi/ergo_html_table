@@ -257,7 +257,9 @@ class HTML_Table_Storage extends HTML_Common
     public function setRowType(int $row, string $type): void
     {
         for ($counter = 0; $counter < $this->_cols; $counter++) {
-            $this->_structure[$row][$counter]['type'] = $type;
+            if (!$this->isCellSpanned($row, $counter)) {
+                $this->_structure[$row][$counter]['type'] = $type;
+            }
         }
     }
 
@@ -270,7 +272,9 @@ class HTML_Table_Storage extends HTML_Common
     public function setColType(int $col, string $type): void
     {
         for ($counter = 0; $counter < $this->_rows; $counter++) {
-            $this->_structure[$counter][$col]['type'] = $type;
+            if (!$this->isCellSpanned($counter, $col)) {
+                $this->_structure[$counter][$col]['type'] = $type;
+            }
         }
     }
 
