@@ -1011,6 +1011,36 @@ class HTML_Table_Storage extends HTML_Common
     }
 
     /**
+     * Inserts a new column and merges it to the previous column.
+     *
+     * @param   int     $col    Column id to which the new column is appended. I.e. this
+     *                          IS NOT the id of the new column.
+     * @return  void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function appendSpannedCol(int $col): void
+    {
+        if ($col < 0 || $col >= $this->getColCount() - 1) {
+            return;
+        }
+        $row = 0;
+        while ($row < $this->getRowCount()) {
+            [$sR, $sC] = $this->spanBase($row, $col, true);
+            $sColSpan = $this->_structure[$sR][$sC]['attr']['colspan'] ?? 1;
+            $attr = $this->getCellAttributes($row, $col);
+            unset($attr['rowspan']);
+            unset($attr['colspan']);
+            $cell = '__SPANNED__';
+            $this->pushToRow($cell, $row, $col + 1);
+            if ($sR === $row) {
+                $this->_structure[$row][$sC]['attr']['colspan'] = $sColSpan + 1;
+            }
+            $row++;
+        }
+        $this->setColCount($this->getColCount() + 1);
+    }
+
+    /**
      * Sets the contents of a header cell
      * @param    int     $row
      * @param    int     $col
