@@ -565,6 +565,7 @@ class HTML_Table_Storage extends HTML_Common
      * @param int $row
      * @param int $col
      * @return string|null
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
      */
     public function getCellType(int $row, int $col): ?string
     {
@@ -590,7 +591,6 @@ class HTML_Table_Storage extends HTML_Common
         }
         return $this->_structure[$row][$col] === '__SPANNED__';
     }
-
 
     /**
      * Splits all rowspan cells on a row.
@@ -667,22 +667,23 @@ class HTML_Table_Storage extends HTML_Common
      */
     public function pasteRows(array $arr, ?int $atRow = null): void
     {
-        $atRow = $atRow ?? $this->getRowCount();
+        $rowCountOrig = $this->getRowCount();
+        $atRow = $atRow ?? $rowCountOrig;
         $atRow = $atRow < 0 ? 0 : $atRow;
-        if ($atRow < 0 || $atRow > $this->getRowCount()) {
+        if ($atRow < 0 || $atRow > $rowCountOrig) {
             trigger_error("atRow argument (val = $atRow) out of bounds.", E_USER_ERROR);
         }
         $this->splitAtRow($atRow);
         $tmp = [];
-        if ($atRow <= $this->getRowCount() - 1) {
+        if ($atRow <= $rowCountOrig - 1) {
             $tmp = array_splice($this->_structure, $atRow);
         }
         $this->_structure = array_merge($this->_structure, $arr);
         if (count($tmp)) {
             $this->_structure = array_merge($this->_structure, $tmp);
         }
-        $this->setRowCount($this->getRowCount() + count($arr));
-        if ($this->getRowCount() === 1) {
+        $this->setRowCount($rowCountOrig + count($arr));
+        if ($rowCountOrig === 0) {
             $noCols = array_key_exists('attr', $arr[0]) ? count($arr[0]) - 1 : count($arr[0]);
             $this->setColCount($noCols);
         }
