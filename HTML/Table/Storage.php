@@ -553,7 +553,25 @@ class HTML_Table_Storage extends HTML_Common
     }
 
     /**
-     * Tests if the cell is spanned.
+     * Returns cell's type.
+     *
+     * If the referenced cell is not defined or the cell is spanned, the method
+     * returns null.
+     *
+     * @param int $row
+     * @param int $col
+     * @return string|null
+     */
+    public function getCellType(int $row, int $col): ?string
+    {
+        if (!isset($this->_structure[$row][$col]) || $this->isCellSpanned($row, $col)) {
+            return null;
+        }
+        return $this->_structure[$row][$col]['type'] ?? 'TD';
+    }
+
+    /**
+     * Tests if the cell is spanned, i.e. it equals to '__SPANNED__'.
      *
      * @param   int $row
      * @param   int $col
