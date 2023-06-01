@@ -533,6 +533,30 @@ class HTML_Table_Storage extends HTML_Common
     }
 
     /**
+     * Updates the contents of cells in a column.
+     * 
+     * @param int $col
+     * @param array $contents   Array of strings
+     * @param string $type
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function updateColContents(int $col, array $contents = null, string $type = 'td'): void
+    {
+        if ($col < 0 || $col >= $this->getColCount()) {
+            return;
+        }
+        $type = strtolower($type);
+        foreach ($contents as $row => $content) {
+            if ($type === 'td') {
+                $this->setCellContents($row, $col, $content);
+            } elseif ($type === 'th') {
+                $this->setHeaderContents($row, $col, $content);
+            }
+        }
+    }
+
+    /**
      * Returns the cell contents for an existing cell.
      * For __SPANNED__ cell returns null.
      *
@@ -983,8 +1007,8 @@ class HTML_Table_Storage extends HTML_Common
         }
         $row = 0;
         while ($row < $this->getRowCount()) {
-            if ($col === $this->getColCount()) {
-                $this->pushToRow(['contents' => '', 'type' => $type], $row);
+            if ($col === 0 || $col === $this->getColCount()) {
+                $this->pushToRow(['contents' => '', 'type' => $type], $row, $col);
                 $row++;
                 continue;
             }
@@ -1008,6 +1032,51 @@ class HTML_Table_Storage extends HTML_Common
             $row++;
         }
         $this->setColCount($this->getColCount() + 1);
+    }
+
+   /**
+     * Inserts an empty row into the table.
+     *
+     * @param null|int $row New empty row is inserted to this column id. If
+     *                      null, then row is inserted at the end of the table.
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function insertRow(?int $row = null, string $type = 'td'): void
+    {
+        $row = $row ?? $this->getRowCount();
+        if ($row < 0 || $row > $this->getRowCount()) {
+            return;
+        }
+        $newRow = [];
+        if ($row === 0 || $row === $this->getRowCount()) {
+            $newRow = array_fill(0, $this->getColCount(), ['contents' => '', 'type' => $type]);
+        }
+        $col = 0;
+        while ($col < $this->getColCount() && !($row === 0 || $row === $this->getRowCount())) {
+            [$sR, $sC] = $this->spanBase($row, $col);
+            $sColSpan = $this->_structure[$sR][$sC]['attr']['colspan'] ?? 1;
+            $sRowSpan = $this->_structure[$sR][$sC]['attr']['rowspan'] ?? 1;
+            $attr = $this->getCellAttributes($row, $col);
+            unset($attr['rowspan']);
+            unset($attr['colspan']);
+            if ($sR === $row) {
+                $cell = ['contents' => '', 'attr' => $attr, 'type' => $type];
+                $newRow[$col] = $cell;
+                $col++;
+                continue;
+            }
+            $cell = '__SPANNED__';
+            if ($sC === $col) {
+                $this->_structure[$sR][$col]['attr']['rowspan'] = $sRowSpan + 1;
+            }
+            $newRow[$col] = $cell;
+            $col++;
+        }
+        $arr1 = $row > 0 ? array_slice($this->_structure, 0, $row) : [];
+        $arr2 = $row < $this->getRowCount() ? array_slice($this->_structure, $row) : [];
+        $this->_structure = array_merge($arr1, [$newRow], $arr2);
+        $this->setRowCount($this->getRowCount() + 1);
     }
 
     /**
