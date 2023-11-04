@@ -537,20 +537,20 @@ class HTML_Table_Storage extends HTML_Common
      * 
      * @param int $col
      * @param array $contents   Array of strings
-     * @param string $type
+     * @param array|string $type
      * @return void
      * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
      */
-    public function updateColContents(int $col, array $contents = null, string $type = 'td'): void
+    public function updateColContents(int $col, array $contents = null, array|string $type = 'td'): void
     {
         if ($col < 0 || $col >= $this->getColCount()) {
             return;
         }
-        $type = strtolower($type);
+        $cellTypes = array_map('strtolower', is_array($type) ? $type : array_fill(0, count($contents), $type));
         foreach ($contents as $row => $content) {
-            if ($type === 'td') {
+            if ($cellTypes[$row] === 'td') {
                 $this->setCellContents($row, $col, $content);
-            } elseif ($type === 'th') {
+            } elseif ($cellTypes[$row] === 'th') {
                 $this->setHeaderContents($row, $col, $content);
             }
         }
@@ -596,7 +596,7 @@ class HTML_Table_Storage extends HTML_Common
         if (!isset($this->_structure[$row][$col]) || $this->isCellSpanned($row, $col)) {
             return null;
         }
-        return $this->_structure[$row][$col]['type'] ?? 'TD';
+        return strtolower($this->_structure[$row][$col]['type'] ?? 'td');
     }
 
     /**
@@ -686,10 +686,11 @@ class HTML_Table_Storage extends HTML_Common
      *
      * @param array $arr
      * @param int|null $atRow
+     * @param string|null   $type   If set, the cell types of the pasted rows are set explicitly.
      * @return void
      * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
      */
-    public function pasteRows(array $arr, ?int $atRow = null): void
+    public function pasteRows(array $arr, ?int $atRow = null, ?string $type = null): void
     {
         $rowCountOrig = $this->getRowCount();
         $atRow = $atRow ?? $rowCountOrig;
@@ -710,6 +711,13 @@ class HTML_Table_Storage extends HTML_Common
         if ($rowCountOrig === 0) {
             $noCols = array_key_exists('attr', $arr[0]) ? count($arr[0]) - 1 : count($arr[0]);
             $this->setColCount($noCols);
+        }
+        if (isset($type)) {
+            $row = 0;
+            while ($row < count($arr)) {
+                $this->setRowType($row + $atRow, $type);
+                $row++;
+            }
         }
     }
 
@@ -763,8 +771,8 @@ class HTML_Table_Storage extends HTML_Common
     public function cutCols(int $colStart, ?int $colEnd = null): array
     {
         $colEnd = $colEnd ?? $colStart;
-        if ($colStart < 0 || ($colEnd + 1) > $this->getColCount()) {
-            trigger_error('row arguments out of bounds.', E_USER_ERROR);
+        if ($colStart < 0 || $colEnd  >= $this->getColCount()) {
+            trigger_error('Col arguments out of bounds.', E_USER_ERROR);
         }
         $noCols = $this->getColCount();
         $length = $colEnd - $colStart + 1;
@@ -1110,6 +1118,168 @@ class HTML_Table_Storage extends HTML_Common
     }
 
     /**
+     * Tests if a cell is withing a specified area.
+     * 
+     * @param int $rowTop
+     * @param int $colLeft
+     * @param int $rowBottom
+     * @param int $colRight
+     * @param int $row
+     * @param int $col
+     * @return bool
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    private static function isCellInArea(int $rowTop, int $colLeft, int $rowBottom, int $colRight, int $row, int $col): bool
+    {
+        return $row >= $rowTop && $row <= $rowBottom && $col >= $colLeft && $col <= $colRight;
+    } 
+
+    /**
+     * Copies cells from a storage structure.
+     * 
+     * @param int $row1
+     * @param int $col1
+     * @param int $row2
+     * @param int $col2
+     * @param bool $keepKeys
+     * @return array
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function copyCells(int $row1, int $col1, int $row2, int $col2, bool $keepKeys = false): array
+    {
+        if ((min($row1, $row2, $col1, $col2) < 0) || max($row1, $row2)  >= $this->getRowCount() ||
+            max($col1, $col2) >= $this->getColCount()) {
+            trigger_error("Argument out of bounds.", E_USER_ERROR);
+        }
+        $rowS = $row1 < $row2 ? $row1 : $row2;
+        $colS = $col1 < $col2 ? $col1 : $col2;
+        $rowE = $row2 > $row1 ? $row2 : $row1;
+        $colE = $col2 > $col1 ? $col2 : $col1;
+        if ($keepKeys) {
+            $arr = array_fill($rowS, $rowE - $rowS + 1, array_fill($colS, $colE - $colS + 1, ''));
+        } else {
+            $arr = array_fill(0, $rowE - $rowS + 1, array_fill(0, $colE - $colS + 1, ''));
+        }
+        $row = $rowS;
+        $i = 0;
+        $cellData = [];
+        while ($row <= $rowE) {
+            $col = $colS;
+            $j = 0;
+            while ($col <= $colE) {
+                // Checks if the copied cell has a colspan/rowspan setting. 
+                // If the setting is found, it is defined so that the span ends 
+                // at the border of the area to be copied. 
+                // If a spanned cell is copied, and the spanbase is not inside the area 
+                // to be copied, the value of the cell is set to null. 
+                // This is handled in the pasteCells method so that the copied cell is 
+                // not attached to the target.
+                if ($this->isCellSpanned($row, $col)) {
+                    [$rowSpanBase, $colSpanBase] = $this->spanBase($row, $col);
+                    $cellData = self::isCellInArea($rowS, $colS, $rowE, $colE, $rowSpanBase, $colSpanBase) ?
+                        '__SPANNED__' : null;
+                } else {
+                    $rowSpan = $this->_structure[$row][$col]['attr']['rowspan'] ?? 1;
+                    $rowSpan = ($row + $rowSpan - 1 > $rowE) ? $rowE - $row + 1 : $rowSpan;
+                    $colSpan = $this->_structure[$row][$col]['attr']['colspan'] ?? 1;
+                    $colSpan = ($col + $colSpan - 1 > $colE) ? $colE - $col + 1 : $colSpan;
+                    $cellData = $this->_structure[$row][$col];
+                    if (!isset($cellData['attr'])) {
+                        $cellData['attr'] = [];
+                    }
+                    $cellData['attr']['rowspan'] = $rowSpan;
+                    $cellData['attr']['colspan'] = $colSpan;
+                    $this->tidyAttr($cellData);
+                }
+                if ($keepKeys) {
+                    $arr[$row][$col] = $cellData;
+                } else {
+                    $arr[$i][$j] = $cellData;
+                }
+                $col++;
+                $j++;
+            }
+            
+            $row++;
+            $i++;
+        }
+        return $arr;
+    }
+    
+    /**
+     * Pastes cells copied with copyCells method to a storage.
+     * 
+     * NOTE: We expect, that $cells array is returned by copyCells method.
+     * Spanned cells won't be overwritten by this method. To overwrite spanned
+     * cells, use splitSpanHorizontal and splitSpanVertical methods.
+     * 
+     * @param array $cells
+     * @param int $row
+     * @param int $col
+     * @param string $type
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function pasteCells(array $cells, int $row, int $col, string $type = 'td'): void
+    {
+        if ($row < 0 || $row >= $this->getRowCount() || $col < 0 || $col >= $this->getColCount()) {
+            return;
+        }
+        // The cells to be pasted must fit inside the storage!
+        if ($row + count($cells) - 1  >= $this->getRowCount() || $col + count($cells[0]) - 1 >= $this->getColCount()) {
+            return;
+        } 
+        // $i & $j: indexes of _structure
+        // $iCell & $jCell: indexes of $cells array
+        $iCellMax = count($cells) - 1;
+        $iMax = $row + $iCellMax;
+        $i = $iMax;
+        $iCell = $iCellMax;
+        while ($i >= $row) {
+            $jCellMax = count($cells[$iCell]) - 1;
+            $jMax = $col + $jCellMax;
+            $j = $jMax;
+            $jCell = $jCellMax;
+            while ($j >= $col) {
+                // We must be able to paste a spanned cell, because, for example, 
+                // adjacent cells to be connected can have the setting colspan=2 
+                // in the first cell. 
+                // However, have to make sure that the span does not exceed the cells to be pasted. 
+                // + This is ensured when copying cells in the copyCells method. 
+                // We also need to make sure that if we paste to a cell with a 
+                // colspan/rowspan setting, there will be no "orphaned" spanned cells outside the 
+                // pasted cells. 
+                // + This can be ensured by using splitSpan methods before joining.
+                if (is_null($cells[$iCell][$jCell])) {
+                    $j--;
+                    $jCell--;
+                    continue;
+                }
+                if ($j === $jMax && $this->isCellSpanned($i, $j + 1) === true) {
+                    $this->splitSpanVertical($i, $j + 1);
+                } 
+                if ($j === $col && $this->isCellSpanned($i, $j) === true) {
+                    $this->splitSpanVertical($i, $j);
+                }
+                if ($i === $iMax && $this->isCellSpanned($i + 1, $j) === true) {
+                    $this->splitSpanHorizontal($i + 1, $j);
+                } 
+                if ($i === $row && $this->isCellSpanned($i, $j) === true) {
+                    $this->splitSpanHorizontal($i, $j);
+                }
+                //~ if (!is_null($cells[$iCell][$jCell])) {
+                    $this->_structure[$i][$j] = isset($cells[$iCell][$jCell]['contents']) ? 
+                        $cells[$iCell][$jCell] : '__SPANNED__';
+                //~ }
+                $j--;
+                $jCell--;
+            }
+            $i--;
+            $iCell--;
+        }
+    }
+
+    /**
      * Sets the contents of a header cell
      * @param    int     $row
      * @param    int     $col
@@ -1146,7 +1316,7 @@ class HTML_Table_Storage extends HTML_Common
     public function addRow(
         array $contents = null,
         string|array $attributes = null,
-        string $type = 'td',
+        array|string $type = 'td',
         bool $inTR = false
     ): int {
         if (isset($contents) && !is_array($contents)) {
@@ -1157,12 +1327,12 @@ class HTML_Table_Storage extends HTML_Common
             $contents = array();
         }
 
-        $type = strtolower($type);
         $row = $this->_rows++;
+        $type = is_array($type) ? array_map('strtolower', $type) : strtolower($type);
         foreach ($contents as $col => $content) {
-            if ($type == 'td') {
+            if ((is_string($type) && $type === 'td') || (is_array($type) && $type[$col] === 'td')) {
                 $this->setCellContents($row, $col, $content);
-            } elseif ($type == 'th') {
+            } elseif ((is_string($type) && $type === 'th') || (is_array($type) && $type[$col] === 'th')) {
                 $this->setHeaderContents($row, $col, $content);
             }
         }

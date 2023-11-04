@@ -323,6 +323,27 @@ class HTML_Table extends HTML_Common
         }
     }
 
+    /**
+     * Inserts a new col in a colgroup.
+     * 
+     * @param int|null  $col        At what index the col will be inserted. If this is not set, the new
+     *                              coll will be added at the end of the colgroup.
+     * @param array     $contents
+     * @param int       $groupId
+     * @return void
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function insertCol(?int $col = null, array $contents = [''], int $groupId = 0): void
+    {
+        if (!isset($col)) {
+            $this->_colgroup[$groupId]['contents'][] = $contents;
+            return;
+        }
+        $arr1 = $col > 0 ? array_slice($this->_colgroup[$groupId]['contents'], 0, $col) : [];
+        $arr2 = $col < $this->getColCount() ? array_slice($this->_colgroup[$groupId]['contents'], $col) : [];
+        $this->_colgroup[$groupId]['contents'] = array_merge($arr1, $contents, $arr2);
+    }
+
     public function getColGroup(): array
     {
         return $this->_colgroup ?? [];
