@@ -10,7 +10,7 @@ $storage->setCellAttributes(0, 0, ['colspan' => 2, 'rowspan' => 2]);
 $storage->setCellAttributes(0, 3, ['rowspan' => 3]);
 $storage->setCellAttributes(3, 0, ['colspan' => 3]);
 
-$storage->setTab('    ');
+$storage::setOption(HTML_Common2::OPTION_INDENT, '    ');
 
 $fn = function (int $rows, int $col) {
     return array_map(function ($val) use ($col) {return "row=$val, col=$col";}, range(0, $rows - 1));

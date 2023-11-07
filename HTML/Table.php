@@ -1,5 +1,7 @@
 <?php
 
+use \Sjweh\Lib8\HtmlCommon2;
+
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
@@ -86,7 +88,7 @@
  * @version    Release: @package_version@
  * @link       http://pear.php.net/package/HTML_Table
  */
-class HTML_Table extends HTML_Common
+class HTML_Table extends HtmlCommon2
 {
     /**
      * Value to insert into empty cells. This is used as a default for
@@ -167,7 +169,8 @@ class HTML_Table extends HTML_Common
      */
     public function __construct(string|array $attributes = null, ?int $tabOffset = 0, bool $useTGroups = false)
     {
-        parent::__construct($attributes, (int)$tabOffset);
+        parent::__construct($attributes);
+        $this->setIndentLevel($tabOffset);
         $this->_useTGroups = $useTGroups;
         $this->addBody();
         if ($this->_useTGroups) {
@@ -197,7 +200,7 @@ class HTML_Table extends HTML_Common
         if (is_null($this->_thead)) {
             $this->_useTGroups = true;
             $this->_thead = new HTML_Table_Storage(
-                $this->_tabOffset,
+                $this->getIndentLevel(),
                 $this->_useTGroups
             );
             for ($i = 0; $i < $this->_tbodyCount; $i++) {
@@ -217,7 +220,7 @@ class HTML_Table extends HTML_Common
         if (is_null($this->_tfoot)) {
             $this->_useTGroups = true;
             $this->_tfoot = new HTML_Table_Storage(
-                $this->_tabOffset,
+                $this->getIndentLevel(),
                 $this->_useTGroups
             );
             for ($i = 0; $i < $this->_tbodyCount; $i++) {
@@ -263,7 +266,7 @@ class HTML_Table extends HTML_Common
 
         $body = $this->_tbodyCount++;
         $this->_tbodies[$body] = new HTML_Table_Storage(
-            $this->_tabOffset,
+            $this->getIndentLevel(),
             $this->_useTGroups
         );
         $this->_tbodies[$body]->setAutoFill($this->_autoFill);
@@ -299,7 +302,7 @@ class HTML_Table extends HTML_Common
      */
     public function setCaption(string $caption, string|array $attributes = null): void
     {
-        $attributes = $this->_parseAttributes($attributes);
+        $attributes = self::prepareAttributes($attributes);
         $this->_caption = array('attr' => $attributes, 'contents' => $caption);
     }
 
@@ -315,7 +318,7 @@ class HTML_Table extends HTML_Common
     public function setColGroup(string|array $colgroup = null, string|array $attributes = null): void
     {
         if (isset($colgroup)) {
-            $attributes = $this->_parseAttributes($attributes);
+            $attributes = self::prepareAttributes($attributes);
             $this->_colgroup[] = array('attr' => $attributes,
                                        'contents' => $colgroup);
         } else {
@@ -989,9 +992,9 @@ class HTML_Table extends HTML_Common
     public function toHtml(): string
     {
         $strHtml = '';
-        $tabs = $this->_getTabs();
-        $tab = $this->_getTab();
-        $lnEnd = $this->_getLineEnd();
+        $tabs = $this->getIndent();
+        $tab = self::getOption(HTML_Common2::OPTION_INDENT);
+        $lnEnd = self::getOption(HTML_Common2::OPTION_LINEBREAK);
         $tBodyColCounts = array();
         for ($i = 0; $i < $this->_tbodyCount; $i++) {
             $tBodyColCounts[] = $this->_tbodies[$i]->getColCount();
@@ -1000,16 +1003,16 @@ class HTML_Table extends HTML_Common
         if (count($tBodyColCounts) > 0) {
             $tBodyMaxColCount = max($tBodyColCounts);
         }
-        if ($this->_comment) {
-            $strHtml .= $tabs . "<!-- {$this->_comment} -->" . $lnEnd;
+        if ($this->getComment()) {
+            $strHtml .= $tabs . "<!-- {$this->getComment()} -->" . $lnEnd;
         }
         if ($this->getRowCount() > 0 && $tBodyMaxColCount > 0) {
             $strHtml .=
-                $tabs . '<table' . $this->_getAttrString($this->_attributes) . '>' . $lnEnd;
+                $tabs . '<table' . $this->getAttributes(true) . '>' . $lnEnd;
             if (!empty($this->_caption)) {
                 $attr = $this->_caption['attr'];
                 $contents = $this->_caption['contents'];
-                $strHtml .= $tabs . $tab . '<caption' . $this->_getAttrString($attr) . '>';
+                $strHtml .= $tabs . $tab . '<caption' . self::getAttributesString($attr) . '>';
                 if (is_array($contents)) {
                     $contents = implode(', ', $contents);
                 }
@@ -1020,15 +1023,15 @@ class HTML_Table extends HTML_Common
                 foreach ($this->_colgroup as $g => $col) {
                     $attr = $this->_colgroup[$g]['attr'];
                     $contents = $this->_colgroup[$g]['contents'];
-                    $strHtml .= $tabs . $tab . '<colgroup' . $this->_getAttrString($attr) . '>';
+                    $strHtml .= $tabs . $tab . '<colgroup' . self::getAttributesString($attr) . '>';
                     if (!empty($contents)) {
                         $strHtml .= $lnEnd;
                         if (!is_array($contents)) {
                             $contents = array($contents);
                         }
                         foreach ($contents as $a => $colAttr) {
-                            $attr = $this->_parseAttributes($colAttr);
-                            $strHtml .= $tabs . $tab . $tab . '<col' . $this->_getAttrString($attr) . ' />' . $lnEnd;
+                            $attr = self::prepareAttributes($colAttr);
+                            $strHtml .= $tabs . $tab . $tab . '<col' . self::getAttributesString($attr) . ' />' . $lnEnd;
                         }
                         $strHtml .= $tabs . $tab;
                     }
@@ -1049,7 +1052,7 @@ class HTML_Table extends HTML_Common
                     $this->_thead->setColCount($maxColCount);
                     if ($this->_thead->getRowCount() > 0) {
                         $strHtml .= $tabs . $tab . '<thead' .
-                                    $this->_getAttrString($this->_thead->_attributes) .
+                                    $this->_thead->getAttributes(true) .
                                     '>' . $lnEnd;
                         $strHtml .= $this->_thead->toHtml($tabs, $tab);
                         $strHtml .= $tabs . $tab . '</thead>' . $lnEnd;
@@ -1059,7 +1062,7 @@ class HTML_Table extends HTML_Common
                     $this->_tfoot->setColCount($maxColCount);
                     if ($this->_tfoot->getRowCount() > 0) {
                         $strHtml .= $tabs . $tab . '<tfoot' .
-                                    $this->_getAttrString($this->_tfoot->_attributes) .
+                                    $this->_tfoot->getAttributes(true) .
                                     '>' . $lnEnd;
                         $strHtml .= $this->_tfoot->toHtml($tabs, $tab);
                         $strHtml .= $tabs . $tab . '</tfoot>' . $lnEnd;
@@ -1069,7 +1072,7 @@ class HTML_Table extends HTML_Common
                     $this->_tbodies[$i]->setColCount($maxColCount);
                     if ($this->_tbodies[$i]->getRowCount() > 0) {
                         $strHtml .= $tabs . $tab . '<tbody' .
-                                    $this->_getAttrString($this->_tbodies[$i]->_attributes) .
+                                    $this->_tbodies[$i]->getAttributes(true) .
                                     '>' . $lnEnd;
                         $strHtml .= $this->_tbodies[$i]->toHtml($tabs, $tab);
                         $strHtml .= $tabs . $tab . '</tbody>' . $lnEnd;

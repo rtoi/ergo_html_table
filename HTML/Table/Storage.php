@@ -2,6 +2,8 @@
 
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
+use \Sjweh\Lib8\HtmlCommon2;
+
 /**
  * Storage class for HTML::Table data
  *
@@ -68,7 +70,7 @@
  * @version    Release: @package_version@
  * @link       http://pear.php.net/package/HTML_Table
  */
-class HTML_Table_Storage extends HTML_Common
+class HTML_Table_Storage extends HTMLCommon2
 {
     /**
      * Value to insert into empty cells
@@ -130,7 +132,8 @@ class HTML_Table_Storage extends HTML_Common
      */
     function __construct(int $tabOffset = 0, bool $useTGroups = false)
     {
-        parent::__construct(null, $tabOffset);
+        parent::__construct();
+        $this->setIndentLevel($tabOffset);
         $this->_useTGroups = $useTGroups;
     }
 
@@ -299,13 +302,33 @@ class HTML_Table_Storage extends HTML_Common
         ) {
              return;
         }
-        $attributes = $this->_parseAttributes($attributes);
+        $attributes = self::prepareAttributes($attributes);
         $err = $this->_adjustEnds($row, $col, 'setCellAttributes', $attributes);
         if (PEAR::isError($err)) {
             return $err;
         }
         $this->_structure[$row][$col]['attr'] = $attributes;
         $this->_updateSpanGrid($row, $col);
+    }
+
+    public function hasCellClass(int $row, int $col, string $class): bool
+    {
+        $attr = $this->getCellAttributes($row, $col);
+        return self::hasClassArray($class, $attr);
+    }
+
+    public function addCellClass(int $row, int $col, array|string $class): void
+    {
+        $attr = $this->getCellAttributes($row, $col);
+        $newAttr = self::addClassArray($class, $attr);
+        $this->setCellAttributes($row, $col, $newAttr);
+    } 
+    
+    public function removeCellClass(int $row, int $col, array|string $class): void
+    {
+        $attr = $this->getCellAttributes($row, $col);
+        $newAttr = self::removeClassArray($class, $attr);
+        $this->setCellAttributes($row, $col, $newAttr);        
     }
 
     /**
@@ -364,13 +387,13 @@ class HTML_Table_Storage extends HTML_Common
         $rowSpanBase = $this->_structure[$rowS][$colS]['attr']['rowspan'] ?? 1;
         $rowSpanNew = ($rowS + $rowSpanBase - 1) - $row + 1;
         $rowSpanUpdated = $row - $rowS;
-        $this->_updateAttrArray($this->_structure[$rowS][$colS]['attr'], ['rowspan' => $rowSpanUpdated]);
+        $this->updateAttrArray($this->_structure[$rowS][$colS]['attr'], ['rowspan' => $rowSpanUpdated]);
         $this->tidyAttr($this->_structure[$rowS][$colS]);
         $cellBase = $this->_structure[$rowS][$colS];
         $this->_structure[$row][$colS] = ['type' => '', 'contents' => '', 'attr' => []];
         $this->_structure[$row][$colS]['type'] = $cellBase['type'];
         $this->_structure[$row][$colS]['attr'] = $cellBase['attr'];
-        $this->_updateAttrArray($this->_structure[$row][$colS]['attr'], ['rowspan' => $rowSpanNew]);
+        $this->updateAttrArray($this->_structure[$row][$colS]['attr'], ['rowspan' => $rowSpanNew]);
         $this->tidyAttr($this->_structure[$row][$colS]);
         $this->_updateSpanGrid($row, $colS);
     }
@@ -394,13 +417,13 @@ class HTML_Table_Storage extends HTML_Common
         $colSpanBase = $this->_structure[$rowS][$colS]['attr']['colspan'] ?? 1;
         $colSpanNew = ($colS + $colSpanBase - 1) - $col + 1;
         $colSpanUpdated = $col - $colS;
-        $this->_updateAttrArray($this->_structure[$rowS][$colS]['attr'], ['colspan' => $colSpanUpdated]);
+        $this->updateAttrArray($this->_structure[$rowS][$colS]['attr'], ['colspan' => $colSpanUpdated]);
         $this->tidyAttr($this->_structure[$rowS][$colS]);
         $cellBase = $this->_structure[$rowS][$colS];
         $this->_structure[$rowS][$col] = ['type' => '', 'contents' => '', 'attr' => []];
         $this->_structure[$rowS][$col]['type'] = $cellBase['type'];
         $this->_structure[$rowS][$col]['attr'] = $cellBase['attr'];
-        $this->_updateAttrArray($this->_structure[$rowS][$col]['attr'], ['colspan' => $colSpanNew]);
+        $this->updateAttrArray($this->_structure[$rowS][$col]['attr'], ['colspan' => $colSpanNew]);
         $this->tidyAttr($this->_structure[$rowS][$col]);
         $this->_updateSpanGrid($row, $colS);
     }
@@ -422,13 +445,13 @@ class HTML_Table_Storage extends HTML_Common
         ) {
             return;
         }
-        $attributes = $this->_parseAttributes($attributes);
+        $attributes = self::prepareAttributes($attributes);
         $err = $this->_adjustEnds($row, $col, 'updateCellAttributes', $attributes);
         if (PEAR::isError($err)) {
             return $err;
         }
         $this->_structure[$row][$col]['attr'] ??= [];
-        $this->_updateAttrArray($this->_structure[$row][$col]['attr'], $attributes);
+        $this->updateAttrArray($this->_structure[$row][$col]['attr'], $attributes);
         $this->_updateSpanGrid($row, $col);
     }
 
@@ -920,10 +943,10 @@ class HTML_Table_Storage extends HTML_Common
         if (($vertical && $horizontal) || (!$vertical && !$horizontal)) {
             return;
         }
-        $colSpan1 = $this->_structure[$rowS1][$colS1]['attr']['colspan'] ?? 1;
-        $rowSpan1 = $this->_structure[$rowS1][$colS1]['attr']['rowspan'] ?? 1;
-        $colSpan2 = $this->_structure[$rowS2][$colS2]['attr']['colspan'] ?? 1;
-        $rowSpan2 = $this->_structure[$rowS2][$colS2]['attr']['rowspan'] ?? 1;
+        $colSpan1 = (int) ($this->_structure[$rowS1][$colS1]['attr']['colspan'] ?? 1);
+        $rowSpan1 = (int) ($this->_structure[$rowS1][$colS1]['attr']['rowspan'] ?? 1);
+        $colSpan2 = (int) ($this->_structure[$rowS2][$colS2]['attr']['colspan'] ?? 1);
+        $rowSpan2 = (int) ($this->_structure[$rowS2][$colS2]['attr']['rowspan'] ?? 1);
         if (
             ($vertical && ($colSpan1 !== $colSpan2)) ||
             ($horizontal && ($rowSpan1 !== $rowSpan2))
@@ -959,7 +982,7 @@ class HTML_Table_Storage extends HTML_Common
     }
 
     /**
-     * Combines one column with the on on its right side.
+     * Combines one column with the one on its right side.
      *
      * @param int       $col    The column to be merged.
      * @param string    $glue   String used as glue when merging cells. If the cell
@@ -1369,7 +1392,7 @@ class HTML_Table_Storage extends HTML_Common
                 }
             }
         } else {
-            $attributes = $this->_parseAttributes($attributes);
+            $attributes = self::prepareAttributes($attributes);
             $err = $this->_adjustEnds($row, 0, 'setRowAttributes', $attributes);
             if (PEAR::isError($err)) {
                 return $err;
@@ -1405,13 +1428,13 @@ class HTML_Table_Storage extends HTML_Common
                 }
             }
         } else {
-            $attributes = $this->_parseAttributes($attributes);
+            $attributes = self::prepareAttributes($attributes);
             $err = $this->_adjustEnds($row, 0, 'updateRowAttributes', $attributes);
             if (PEAR::isError($err)) {
                 return $err;
             }
             $this->_structure[$row]['attr'] ??= [];
-            $this->_updateAttrArray($this->_structure[$row]['attr'], $attributes);
+            $this->updateAttrArray($this->_structure[$row]['attr'], $attributes);
         }
     }
 
@@ -1517,6 +1540,20 @@ class HTML_Table_Storage extends HTML_Common
         }
     }
 
+    public function addColClass(int $col, array|string $class): void
+    {
+        for ($i = 0; $i < $this->_rows; $i++) {
+            $this->addCellClass($i, $col, $class);
+        }
+    }
+
+    public function removeColClass(int $col, array|string $class): void
+    {
+        for ($i = 0; $i < $this->_rows; $i++) {
+            $this->removeCellClass($i, $col, $class);
+        }
+    }
+
     /**
      * Updates the column attributes for an existing column
      * @param    int      $col            Column index
@@ -1566,6 +1603,11 @@ class HTML_Table_Storage extends HTML_Common
         }
     }
 
+    public function __toString(): string
+    {
+        return $this->toHtml();
+    }
+
     /**
      * Returns the table rows as HTML
      * @access   public
@@ -1575,12 +1617,12 @@ class HTML_Table_Storage extends HTML_Common
     {
         $strHtml = '';
         if (is_null($tabs)) {
-            $tabs = $this->_getTabs();
+            $tabs = $this->getIndent();
         }
         if (is_null($tab)) {
-            $tab = $this->_getTab();
+            $tab = self::getOption(HTML_Common2::OPTION_INDENT);
         }
-        $lnEnd = $this->_getLineEnd();
+        $lnEnd = self::getOption(HTML_Common2::OPTION_LINEBREAK);
         if ($this->_useTGroups) {
             $extraTab = $tab;
         } else {
@@ -1590,7 +1632,7 @@ class HTML_Table_Storage extends HTML_Common
             for ($i = 0; $i < $this->_rows; $i++) {
                 $attr = '';
                 if (isset($this->_structure[$i]['attr'])) {
-                    $attr = $this->_getAttrString($this->_structure[$i]['attr']);
+                    $attr = self::getAttributesString($this->_structure[$i]['attr']);
                 }
                 $strHtml .= $tabs . $tab . $extraTab . '<tr' . $attr . '>' . $lnEnd;
                 for ($j = 0; $j < $this->_cols; $j++) {
@@ -1609,14 +1651,14 @@ class HTML_Table_Storage extends HTML_Common
                     if (isset($this->_structure[$i][$j]['contents'])) {
                         $contents = $this->_structure[$i][$j]['contents'];
                     }
-                    $strHtml .= $tabs . $tab . $tab . $extraTab . "<$type" . $this->_getAttrString($attr) . '>';
+                    $strHtml .= $tabs . $tab . $tab . $extraTab . "<$type" . self::getAttributesString($attr) . '>';
                     if (is_object($contents)) {
                         // changes indent and line end settings on nested tables
-                        if (is_subclass_of($contents, 'html_common')) {
-                            $contents->setTab($tab . $extraTab);
-                            $contents->setTabOffset($this->_tabOffset + 3);
+                        if (is_subclass_of($contents, 'HtmlCommon2')) {
+                            self::setOption(HTML_Common2::OPTION_INDENT, $tab . $extraTab);
+                            $contents->setIndentLevel($this->getIndentLevel() + 3);
                             $contents->_nestLevel = $this->_nestLevel + 1;
-                            $contents->setLineEnd($this->_getLineEnd());
+                            $contents->setLineEnd(self::getOption(HTML_Common2::OPTION_LINEBREAK));
                         }
                         if (method_exists($contents, 'toHtml')) {
                             $contents = $contents->toHtml();

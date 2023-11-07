@@ -10,7 +10,7 @@ $storage->setCellAttributes(0, 0, ['colspan' => 2, 'rowspan' => 2]);
 $storage->setCellAttributes(0, 3, ['rowspan' => 3]);
 $storage->setCellAttributes(3, 0, ['colspan' => 3]);
 
-$storage->setTab('    ');
+$storage::setOption(HTML_Common2::OPTION_INDENT, '    ');
 
 $storage->insertRow(1);
 echo $storage->toHTML();

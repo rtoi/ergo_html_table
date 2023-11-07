@@ -23,7 +23,7 @@ $storage->setCellAttributes(3, 0, ['colspan' => 3]);
 $storage->mergeCells(2, 0, 2, 1, '|');
 $storage->mergeCells(0, 2, 1, 2);
 $storage->mergeCells(1, 2, 2, 2);
-$storage->mergeCells(1, 2, 1, 3, '<br/>');
+$storage->mergeCells(0, 2, 0, 3, '<br/>');
 
 echo $table->toHTML();
 ?>

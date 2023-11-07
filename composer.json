@@ -29,20 +29,25 @@
     "autoload": {
         "psr-0": { "HTML" : "./" }
     },
+    "repositories": [
+        {
+            "name" : "sjweh/lib8",
+            "type" : "path",
+            "url" : "/home/rtoi/zroot/sjweh_lib8"
+        },
+        {
+            "name" : "pear/http",
+            "type" : "vcs",
+            "url" : "https://github.com/webmaster-flw/HTTP.git"
+        }
+    ],
     "support": {
         "issues": "http://pear.php.net/bugs/search.php?cmd=display&package_name[]=HTML_Table",
         "source": "https://github.com/pear/HTML_Table"
     },
-    "repositories": [
-        {
-            "name" : "pear/html_common",
-            "type" : "vcs",
-            "url" : "https://github.com/MisterIcy/HTML_Common.git"
-        }
-    ],
 	"minimum-stability" : "dev",    
     "require": {
         "pear/pear-core-minimal": "*",
-        "pear/html_common": "*"
+        "sjweh/lib8": "*"
     }
 }
