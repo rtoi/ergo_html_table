@@ -4,7 +4,7 @@
 <?php
 // $Id$
 require_once 'vendor/autoload.php';
-$table = new HTML_Table();
+$table = new \Sjweh\Html\Table();
 
 $colgroup = array('style="font-size: 120%;"', 'class="col2"', 'align="right"');
 $attributes = 'span="3" class="group1"';

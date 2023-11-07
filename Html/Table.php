@@ -2,6 +2,7 @@
 
 namespace Sjweh\Html;
 
+use PEAR;
 
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
@@ -90,7 +91,7 @@ namespace Sjweh\Html;
  * @link       http://pear.php.net/package/HTML_Table
  */
  
-class Table extends HtmlCommon2
+class Table extends Common2
 {
     /**
      * Value to insert into empty cells. This is used as a default for
@@ -126,22 +127,22 @@ class Table extends HtmlCommon2
     private array $_colgroup = [];
 
     /**
-     * HTML_Table_Storage object for the (t)head of the table
+     * Table\Storage object for the (t)head of the table
      * @var    object
      * @access private
      */
-    private ?HTML_Table_Storage $_thead = null;
+    private ?Table\Storage $_thead = null;
 
     /**
-     * HTML_Table_Storage object for the (t)foot of the table
+     * Table\Storage object for the (t)foot of the table
      * @var    object
      * @access private
      */
-    private ?HTML_Table_Storage $_tfoot = null;
+    private ?Table\Storage $_tfoot = null;
 
     /**
-     * HTML_Table_Storage object for the (t)body of the table
-     * @var    array of HTML_Table_Storage objects
+     * Table\Storage object for the (t)body of the table
+     * @var    array of Table\Storage objects
      * @access private
      */
     private array $_tbodies = [];
@@ -176,8 +177,8 @@ class Table extends HtmlCommon2
         $this->_useTGroups = $useTGroups;
         $this->addBody();
         if ($this->_useTGroups) {
-            $this->_thead = new HTML_Table_Storage($tabOffset, $this->_useTGroups);
-            $this->_tfoot = new HTML_Table_Storage($tabOffset, $this->_useTGroups);
+            $this->_thead = new Table\Storage($tabOffset, $this->_useTGroups);
+            $this->_tfoot = new Table\Storage($tabOffset, $this->_useTGroups);
         }
     }
 
@@ -193,15 +194,15 @@ class Table extends HtmlCommon2
     }
 
     /**
-     * Returns the HTML_Table_Storage object for <thead>
+     * Returns the Table\Storage object for <thead>
      * @access  public
      * @return  object
      */
-    public function getHeader(): HTML_Table_Storage
+    public function getHeader(): Table\Storage
     {
         if (is_null($this->_thead)) {
             $this->_useTGroups = true;
-            $this->_thead = new HTML_Table_Storage(
+            $this->_thead = new Table\Storage(
                 $this->getIndentLevel(),
                 $this->_useTGroups
             );
@@ -213,15 +214,15 @@ class Table extends HtmlCommon2
     }
 
     /**
-     * Returns the HTML_Table_Storage object for <tfoot>
+     * Returns the Table\Storage object for <tfoot>
      * @access  public
      * @return  object
      */
-    public function getFooter(): HTML_Table_Storage
+    public function getFooter(): Table\Storage
     {
         if (is_null($this->_tfoot)) {
             $this->_useTGroups = true;
-            $this->_tfoot = new HTML_Table_Storage(
+            $this->_tfoot = new Table\Storage(
                 $this->getIndentLevel(),
                 $this->_useTGroups
             );
@@ -233,7 +234,7 @@ class Table extends HtmlCommon2
     }
 
     /**
-     * Returns the HTML_Table_Storage object for the specified <tbody>
+     * Returns the Table\Storage object for the specified <tbody>
      * (or the whole table if <t{head|foot|body}> is not used)
      * @param   int       $body              (optional) The index of the body to
      *                                       return.
@@ -241,7 +242,7 @@ class Table extends HtmlCommon2
      * @return  object
      * @throws  PEAR_Error
      */
-    public function getBody($body = 0): HTML_Table_Storage
+    public function getBody($body = 0): Table\Storage
     {
         $ret = $this->_adjustTbodyCount($body, 'getBody');
         if (PEAR::isError($ret)) {
@@ -267,7 +268,7 @@ class Table extends HtmlCommon2
         }
 
         $body = $this->_tbodyCount++;
-        $this->_tbodies[$body] = new HTML_Table_Storage(
+        $this->_tbodies[$body] = new Table\Storage(
             $this->getIndentLevel(),
             $this->_useTGroups
         );
@@ -995,8 +996,8 @@ class Table extends HtmlCommon2
     {
         $strHtml = '';
         $tabs = $this->getIndent();
-        $tab = self::getOption(HTML_Common2::OPTION_INDENT);
-        $lnEnd = self::getOption(HTML_Common2::OPTION_LINEBREAK);
+        $tab = self::getOption(Common2::OPTION_INDENT);
+        $lnEnd = self::getOption(Common2::OPTION_LINEBREAK);
         $tBodyColCounts = array();
         for ($i = 0; $i < $this->_tbodyCount; $i++) {
             $tBodyColCounts[] = $this->_tbodies[$i]->getColCount();

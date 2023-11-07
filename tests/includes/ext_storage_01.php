@@ -1,7 +1,7 @@
 <?php
 
 if (!isset($storage)) {
-    $storage = new HTML_Table_Storage();
+    $storage = new \Sjweh\Html\Table\Storage();
 }
 
 $data[0][] = 'Foo';

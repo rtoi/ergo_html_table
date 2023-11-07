@@ -5,7 +5,7 @@ ext_017.phpt: Tests HTML_Table_Storage::addColClass and HTML_Table_Storage::remo
 // $Id$
 require_once 'vendor/autoload.php';
 
-$table = new HTML_Table();
+$table = new \Sjweh\Html\Table();
 $storage = $table->getBody();
 
 $storage->addRow(['A', 'B']);

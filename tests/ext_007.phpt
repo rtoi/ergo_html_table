@@ -8,7 +8,7 @@ require_once 'vendor/autoload.php';
 // Use the full table format so that it is easier (for a human) 
 // to study the expected output about how calls to mergeCells method
 // modified the storage.
-$table = new HTML_Table();
+$table = new \Sjweh\Html\Table();
 $storage = $table->getBody();
 $head = $table->getHeader();
 $head->addRow(['A', 'B', 'C', 'D']);

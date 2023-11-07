@@ -4,7 +4,7 @@
 <?php
 // $Id$
 require_once 'vendor/autoload.php';
-$table = new HTML_Table('', 1);
+$table = new \Sjweh\Html\Table('', 1);
 
 $data[0][] = 'Test';
 

@@ -26,20 +26,8 @@
         }
     ],
     "autoload": {
-        "psr-4": { "Sjweh\\Html" : "Html/" }
+        "psr-4": { "Sjweh\\Html\\" : "Html/" }
     },
-    "repositories": [
-        {
-            "name" : "sjweh/lib8",
-            "type" : "path",
-            "url" : "/home/rtoi/zroot/sjweh_lib8"
-        },
-        {
-            "name" : "pear/http",
-            "type" : "vcs",
-            "url" : "https://github.com/webmaster-flw/HTTP.git"
-        }
-    ],
     "support": {
         "issues": "http://pear.php.net/bugs/search.php?cmd=display&package_name[]=HTML_Table",
         "source": "https://github.com/pear/HTML_Table"
@@ -47,6 +35,6 @@
 	"minimum-stability" : "dev",    
     "require": {
         "pear/pear-core-minimal": "*",
-        "sjweh/lib8": "*"
+        "pear/html_common2": "*"
     }
 }

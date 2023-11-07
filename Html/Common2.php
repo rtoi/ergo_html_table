@@ -1,6 +1,6 @@
 <?php
 
-namespace Sjweh\Table;
+namespace Sjweh\Html;
 
 use HTML_Common2;
 

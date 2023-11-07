@@ -4,7 +4,7 @@ bug #20546: Undefined index: attr when calling getCellAttributes on cell without
 <?php
 // $Id$
 require_once 'vendor/autoload.php';
-$table = new HTML_Table();
+$table = new \Sjweh\Html\Table();
 
 $table->addRow(array('dummy'));
 var_dump($table->getCellAttributes(0, 0));

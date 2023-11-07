@@ -1,8 +1,10 @@
 <?php
-
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
+namespace Sjweh\Html\Table;
+
 use \Sjweh\Html\Common2;
+use PEAR;
 
 /**
  * Storage class for HTML::Table data
@@ -70,7 +72,7 @@ use \Sjweh\Html\Common2;
  * @version    Release: @package_version@
  * @link       http://pear.php.net/package/HTML_Table
  */
-class HTML_Table_Storage extends HTMLCommon2
+class Storage extends Common2
 {
     /**
      * Value to insert into empty cells
@@ -1620,9 +1622,9 @@ class HTML_Table_Storage extends HTMLCommon2
             $tabs = $this->getIndent();
         }
         if (is_null($tab)) {
-            $tab = self::getOption(HTML_Common2::OPTION_INDENT);
+            $tab = self::getOption(Common2::OPTION_INDENT);
         }
-        $lnEnd = self::getOption(HTML_Common2::OPTION_LINEBREAK);
+        $lnEnd = self::getOption(Common2::OPTION_LINEBREAK);
         if ($this->_useTGroups) {
             $extraTab = $tab;
         } else {
@@ -1655,10 +1657,10 @@ class HTML_Table_Storage extends HTMLCommon2
                     if (is_object($contents)) {
                         // changes indent and line end settings on nested tables
                         if (is_subclass_of($contents, 'HtmlCommon2')) {
-                            self::setOption(HTML_Common2::OPTION_INDENT, $tab . $extraTab);
+                            self::setOption(Common2::OPTION_INDENT, $tab . $extraTab);
                             $contents->setIndentLevel($this->getIndentLevel() + 3);
                             $contents->_nestLevel = $this->_nestLevel + 1;
-                            $contents->setLineEnd(self::getOption(HTML_Common2::OPTION_LINEBREAK));
+                            $contents->setLineEnd(self::getOption(Common2::OPTION_LINEBREAK));
                         }
                         if (method_exists($contents, 'toHtml')) {
                             $contents = $contents->toHtml();
