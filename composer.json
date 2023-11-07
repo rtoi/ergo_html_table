@@ -26,7 +26,7 @@
         }
     ],
     "autoload": {
-        "psr-0": { "HTML" : "./" }
+        "psr-4": { "Sjweh\\Html" : "Html/" }
     },
     "repositories": [
         {

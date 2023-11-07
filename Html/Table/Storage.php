@@ -2,7 +2,7 @@
 
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
-use \Sjweh\Lib8\HtmlCommon2;
+use \Sjweh\Html\Common2;
 
 /**
  * Storage class for HTML::Table data

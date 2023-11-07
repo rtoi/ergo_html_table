@@ -1,6 +1,7 @@
 <?php
 
-use \Sjweh\Lib8\HtmlCommon2;
+namespace Sjweh\Html;
+
 
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
@@ -88,7 +89,8 @@ use \Sjweh\Lib8\HtmlCommon2;
  * @version    Release: @package_version@
  * @link       http://pear.php.net/package/HTML_Table
  */
-class HTML_Table extends HtmlCommon2
+ 
+class Table extends HtmlCommon2
 {
     /**
      * Value to insert into empty cells. This is used as a default for
