@@ -198,9 +198,9 @@ class Table extends Common2
      * @access  public
      * @return  object
      */
-    public function getHeader(): Table\Storage
+    public function getHeader(bool $add = \true): ?Table\Storage
     {
-        if (is_null($this->_thead)) {
+        if (is_null($this->_thead) && $add) {
             $this->_useTGroups = true;
             $this->_thead = new Table\Storage(
                 $this->getIndentLevel(),
@@ -218,9 +218,9 @@ class Table extends Common2
      * @access  public
      * @return  object
      */
-    public function getFooter(): Table\Storage
+    public function getFooter(bool $add = \true): ?Table\Storage
     {
-        if (is_null($this->_tfoot)) {
+        if (is_null($this->_tfoot) && $add) {
             $this->_useTGroups = true;
             $this->_tfoot = new Table\Storage(
                 $this->getIndentLevel(),

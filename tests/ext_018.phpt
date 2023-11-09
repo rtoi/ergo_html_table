@@ -1,5 +1,5 @@
 --TEST--
-ext_017.phpt: Tests HTML_Table_Storage::addColClass and HTML_Table_Storage::removeColClass
+ext_018.phpt: Tests HTML_Table_Storage::addColClass and HTML_Table_Storage::removeColClass
 --FILE--
 <?php
 // $Id$

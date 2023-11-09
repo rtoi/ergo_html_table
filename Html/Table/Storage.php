@@ -1769,4 +1769,15 @@ class Storage extends Common2
         }
         return false;
     }
+    
+    public function keepAttributes(array $keep): void
+    {
+        for ($row = 0; $row < $this->getRowCount(); $row++) {
+            $this->keepAttributesArray($this->_structure[$row]['attr'], $keep);
+            
+            for ($col = 0; $col < $this->getColCount(); $col++) {
+                $this->keepAttributesArray($this->_structure[$row][$col]['attr'], $keep);
+            }
+        }
+    }
 }

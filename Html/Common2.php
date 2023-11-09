@@ -30,6 +30,14 @@ abstract class Common2 extends HTML_Common2
         }
     }
 
+    protected function keepAttributesArray(array &$attr1, array $attr2): void
+    {
+        $dropAttr = array_diff(array_keys($attr1), $attr2);
+        foreach ($dropAttr as  $key) {
+            unset($attr1[$key]);
+        }
+    }
+
     /**
      * Checks whether the element has given CSS class
      * Method content copied from HTML_Common2
@@ -51,7 +59,7 @@ abstract class Common2 extends HTML_Common2
      * @param array $attr
      * @return array
      */
-    public static function addClassArray(string $class, array $attr = []): array
+    public static function addClassArray(array|string $class, array $attr = []): array
     {
         $tmp = new static();
         $tmp->mergeAttributes($attr);
@@ -66,7 +74,7 @@ abstract class Common2 extends HTML_Common2
      * @param array $attr
      * @return array
      */
-    public static function removeClassArray(string $class, array $attr = []): array
+    public static function removeClassArray(array|string $class, array $attr = []): array
     {
         $tmp = new static();
         $tmp->mergeAttributes($attr);
