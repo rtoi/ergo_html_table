@@ -1773,10 +1773,14 @@ class Storage extends Common2
     public function keepAttributes(array $keep): void
     {
         for ($row = 0; $row < $this->getRowCount(); $row++) {
-            $this->keepAttributesArray($this->_structure[$row]['attr'], $keep);
+            if (isset($this->_structure[$row]['attr'])) {
+                self::keepAttributesArray($this->_structure[$row]['attr'], $keep);
+            }
             
             for ($col = 0; $col < $this->getColCount(); $col++) {
-                $this->keepAttributesArray($this->_structure[$row][$col]['attr'], $keep);
+                if (is_array($this->_structure[$row][$col])) {
+                    self::keepAttributesArray($this->_structure[$row][$col]['attr'], $keep);
+                }
             }
         }
     }

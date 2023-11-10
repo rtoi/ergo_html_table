@@ -30,7 +30,7 @@ abstract class Common2 extends HTML_Common2
         }
     }
 
-    protected function keepAttributesArray(array &$attr1, array $attr2): void
+    public static function keepAttributesArray(array &$attr1, array $attr2): void
     {
         $dropAttr = array_diff(array_keys($attr1), $attr2);
         foreach ($dropAttr as  $key) {
