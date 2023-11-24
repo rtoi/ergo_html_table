@@ -624,6 +624,17 @@ class Storage extends Common2
         return strtolower($this->_structure[$row][$col]['type'] ?? 'td');
     }
 
+    public function setCellType(int $row, int $col, string $type = 'td'): void
+    {
+        $type = strtolower($type);
+        if (!isset($this->_structure[$row][$col]) || $this->isCellSpanned($row, $col)) {
+            return;
+        }
+        $this->_structure[$row][$col]['type'] = $type;
+    }
+
+
+    
     /**
      * Tests if the cell is spanned, i.e. it equals to '__SPANNED__'.
      *
