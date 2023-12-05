@@ -1,9 +1,10 @@
 <?php
+
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 namespace Sjweh\Html\Table;
 
-use \Sjweh\Html\Common2;
+use Sjweh\Html\Common2;
 use PEAR;
 
 /**
@@ -241,10 +242,10 @@ class Storage extends Common2
      */
     public function getColCount(int $row = null): int
     {
-        if (!is_null($row)) {
+        if (!\is_null($row)) {
             $count = 0;
             foreach ($this->_structure[$row] as $cell) {
-                if (is_array($cell)) {
+                if (\is_array($cell)) {
                     $count++;
                 }
             }
@@ -324,13 +325,13 @@ class Storage extends Common2
         $attr = $this->getCellAttributes($row, $col);
         $newAttr = self::addClassArray($class, $attr);
         $this->setCellAttributes($row, $col, $newAttr);
-    } 
-    
+    }
+
     public function removeCellClass(int $row, int $col, array|string $class): void
     {
         $attr = $this->getCellAttributes($row, $col);
         $newAttr = self::removeClassArray($class, $attr);
-        $this->setCellAttributes($row, $col, $newAttr);        
+        $this->setCellAttributes($row, $col, $newAttr);
     }
 
     /**
@@ -502,7 +503,7 @@ class Storage extends Common2
      */
     public function setCellContents(int $row, int $col, $contents, string $type = 'TD')
     {
-        if (is_array($contents)) {
+        if (\is_array($contents)) {
             foreach ($contents as $singleContent) {
                 $ret = $this->_setSingleCellContents(
                     $row,
@@ -559,7 +560,7 @@ class Storage extends Common2
 
     /**
      * Updates the contents of cells in a column.
-     * 
+     *
      * @param int $col
      * @param array $contents   Array of strings
      * @param array|string $type
@@ -571,7 +572,7 @@ class Storage extends Common2
         if ($col < 0 || $col >= $this->getColCount()) {
             return;
         }
-        $cellTypes = array_map('strtolower', is_array($type) ? $type : array_fill(0, count($contents), $type));
+        $cellTypes = \array_map('strtolower', \is_array($type) ? $type : \array_fill(0, \count($contents), $type));
         foreach ($contents as $row => $content) {
             if ($cellTypes[$row] === 'td') {
                 $this->setCellContents($row, $col, $content);
@@ -621,12 +622,12 @@ class Storage extends Common2
         if (!isset($this->_structure[$row][$col]) || $this->isCellSpanned($row, $col)) {
             return null;
         }
-        return strtolower($this->_structure[$row][$col]['type'] ?? 'td');
+        return \strtolower($this->_structure[$row][$col]['type'] ?? 'td');
     }
 
     public function setCellType(int $row, int $col, string $type = 'td'): void
     {
-        $type = strtolower($type);
+        $type = \strtolower($type);
         if (!isset($this->_structure[$row][$col]) || $this->isCellSpanned($row, $col)) {
             return;
         }
@@ -634,7 +635,7 @@ class Storage extends Common2
     }
 
 
-    
+
     /**
      * Tests if the cell is spanned, i.e. it equals to '__SPANNED__'.
      *
@@ -714,7 +715,7 @@ class Storage extends Common2
         $this->splitAtRow($rowEnd + 1);
         $this->splitAtRow($rowStart);
         $this->setRowCount($this->getRowCount() - $length);
-        return array_splice($this->_structure, $rowStart, $length);
+        return \array_splice($this->_structure, $rowStart, $length);
     }
 
     /**
@@ -737,11 +738,11 @@ class Storage extends Common2
         $this->splitAtRow($atRow);
         $tmp = [];
         if ($atRow <= $rowCountOrig - 1) {
-            $tmp = array_splice($this->_structure, $atRow);
+            $tmp = \array_splice($this->_structure, $atRow);
         }
-        $this->_structure = array_merge($this->_structure, $arr);
+        $this->_structure = \array_merge($this->_structure, $arr);
         if (count($tmp)) {
-            $this->_structure = array_merge($this->_structure, $tmp);
+            $this->_structure = \array_merge($this->_structure, $tmp);
         }
         $this->setRowCount($rowCountOrig + count($arr));
         if ($rowCountOrig === 0) {
@@ -750,7 +751,7 @@ class Storage extends Common2
         }
         if (isset($type)) {
             $row = 0;
-            while ($row < count($arr)) {
+            while ($row < \count($arr)) {
                 $this->setRowType($row + $atRow, $type);
                 $row++;
             }
@@ -782,8 +783,8 @@ class Storage extends Common2
         while ($row < $this->getRowCount()) {
             $attr = $this->_structure[$row]['attr'] ?? [];
             unset($this->_structure[$row]['attr']);
-            $out[] =  array_splice($this->_structure[$row], $col, $length);
-            if (count($attr)) {
+            $out[] = \array_splice($this->_structure[$row], $col, $length);
+            if (\count($attr)) {
                 $this->_structure[$row]['attr'] = $attr;
             }
             $row++;
@@ -820,6 +821,53 @@ class Storage extends Common2
     }
 
     /**
+     * Cuts one or more columns from table and return them in an array.
+     *
+     * Columns cut from table can later be pasted back to Storage object with
+     * pasteCols method.
+     *
+     * This differs from cutCols in the way how spanned cols are handled.
+     *
+     * @param int       $colStart   First column to be cut from table
+     * @param int|null  $colEnd     Last column to be cut from table. If this is not
+     *                              set, only one column is cut.
+     * @return array                Columns cut from table in an array.
+     * @see HTML_Table_Storage::pasteCols
+     * @see HTML_Table_Storage::cutCols
+     * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
+     */
+    public function deleteCols(int $colStart, ?int $colEnd = \null): array
+    {
+        $colEnd = $colEnd ?? $colStart;
+        if ($colStart < 0 || $colEnd  >= $this->getColCount()) {
+            trigger_error('Col arguments out of bounds.', E_USER_ERROR);
+        }
+        $noCols = $this->getColCount();
+        $length = $colEnd - $colStart + 1;
+
+        $row = 0;
+        while ($row < $this->getRowCount()) {
+            [$rowS, $colS1] = $this->spanBase($row, $colStart);
+            [$rowS, $colS2] = $this->spanBase($row, $colStart + $length);
+            $colspan = $this->_structure[$row][$colS1]['attr']['colspan'] ?? 1;
+            $rowspan = $this->_structure[$row][$colS1]['attr']['rowspan'] ?? 1;
+
+            if ($colS1 === $colS2 && $colS1 < $colStart && $colspan > ($colStart + $length)) {
+                $this->_structure[$rowS][$colS1]['attr']['colspan'] = $colspan - $length;
+                $row += $rowspan;
+                continue;
+            }
+            $this->splitSpanVertical($row, $colStart + $length);
+            $this->splitSpanVertical($row, $colStart);
+            $row++;
+        }
+        $out = $this->sliceAtCol($colStart, $length);
+        $this->setColCount($noCols - $length);
+        return $out;
+    }
+
+
+    /**
      * Adds one or more columns onto the end of table.
      *
      * @param array $arr Array of columns to be added to table.
@@ -833,8 +881,8 @@ class Storage extends Common2
         while ($row < $this->getRowCount()) {
             $attr = $this->_structure[$row]['attr'] ?? [];
             unset($this->_structure[$row]['attr']);
-            $this->_structure[$row] = array_merge($this->_structure[$row], $arr[$row]);
-            if (count($attr)) {
+            $this->_structure[$row] = \array_merge($this->_structure[$row], $arr[$row]);
+            if (\count($attr)) {
                 $this->_structure[$row]['attr'] = $attr;
             }
             $row++;
@@ -891,8 +939,8 @@ class Storage extends Common2
         unset($this->_structure[$row]['attr']);
         $arr1 = $col > 0 ? array_slice($this->_structure[$row], 0, $col) : [];
         $arr2 = $col < $this->getColCount() ? array_slice($this->_structure[$row], $col) : [];
-        $this->_structure[$row] = array_merge($arr1, $cell, $arr2);
-        if (count($attr)) {
+        $this->_structure[$row] = \array_merge($arr1, $cell, $arr2);
+        if (\count($attr)) {
             $this->_structure[$row]['attr'] = $attr;
         }
     }
@@ -915,7 +963,7 @@ class Storage extends Common2
         if ($atCol < 0 || $atCol > $this->getColCount()) {
             trigger_error("atCol argument (val = $atCol) out of bounds.", E_USER_ERROR);
         }
-        if (count($arr) !== $this->getRowCount()) {
+        if (\count($arr) !== $this->getRowCount()) {
             trigger_error("Row count of arr argument is wrong.", E_USER_ERROR);
         }
         $this->splitAtCol($atCol);
@@ -924,10 +972,10 @@ class Storage extends Common2
             $tmp = $this->sliceAtCol($atCol);
         }
         $this->appendCols($arr);
-        if (count($tmp)) {
+        if (\count($tmp)) {
             $this->appendCols($tmp);
         }
-        $this->setColCount($this->getColCount() + count($arr[0]));
+        $this->setColCount($this->getColCount() + \count($arr[0]));
     }
 
     /**
@@ -980,7 +1028,7 @@ class Storage extends Common2
             return;
         }
         $glue = $glue ?? ($horizontal ? ' ' : '<br>');
-        $glue = strlen($this->_structure[$r1][$c1]['contents']) ? $glue : '';
+        $glue = \strlen($this->_structure[$r1][$c1]['contents']) ? $glue : '';
         if (strlen($this->_structure[$r2][$c2]['contents'])) {
             $this->_structure[$r1][$c1]['contents'] .= $glue . $this->_structure[$r2][$c2]['contents'];
         }
@@ -1023,9 +1071,9 @@ class Storage extends Common2
                 $this->splitSpanHorizontal($row + 1, $col + 1);
             }
             if (
-                strlen($indent) &&
+                \strlen($indent) &&
                 !$this->isCellSpanned($row, $col) &&
-                strlen(trim($this->_structure[$row][$col]['contents'])) === 0
+                \strlen(\trim($this->_structure[$row][$col]['contents'])) === 0
             ) {
                 $this->_structure[$row][$col]['contents'] = $indent;
                 $glue = '';
@@ -1117,9 +1165,9 @@ class Storage extends Common2
             $newRow[$col] = $cell;
             $col++;
         }
-        $arr1 = $row > 0 ? array_slice($this->_structure, 0, $row) : [];
-        $arr2 = $row < $this->getRowCount() ? array_slice($this->_structure, $row) : [];
-        $this->_structure = array_merge($arr1, [$newRow], $arr2);
+        $arr1 = $row > 0 ? \array_slice($this->_structure, 0, $row) : [];
+        $arr2 = $row < $this->getRowCount() ? \array_slice($this->_structure, $row) : [];
+        $this->_structure = \array_merge($arr1, [$newRow], $arr2);
         $this->setRowCount($this->getRowCount() + 1);
     }
 
@@ -1155,7 +1203,7 @@ class Storage extends Common2
 
     /**
      * Tests if a cell is withing a specified area.
-     * 
+     *
      * @param int $rowTop
      * @param int $colLeft
      * @param int $rowBottom
@@ -1168,11 +1216,11 @@ class Storage extends Common2
     private static function isCellInArea(int $rowTop, int $colLeft, int $rowBottom, int $colRight, int $row, int $col): bool
     {
         return $row >= $rowTop && $row <= $rowBottom && $col >= $colLeft && $col <= $colRight;
-    } 
+    }
 
     /**
      * Copies cells from a storage structure.
-     * 
+     *
      * @param int $row1
      * @param int $col1
      * @param int $row2
@@ -1183,8 +1231,10 @@ class Storage extends Common2
      */
     public function copyCells(int $row1, int $col1, int $row2, int $col2, bool $keepKeys = false): array
     {
-        if ((min($row1, $row2, $col1, $col2) < 0) || max($row1, $row2)  >= $this->getRowCount() ||
-            max($col1, $col2) >= $this->getColCount()) {
+        if (
+            (\min($row1, $row2, $col1, $col2) < 0) || \max($row1, $row2)  >= $this->getRowCount() ||
+                \max($col1, $col2) >= $this->getColCount()
+        ) {
             trigger_error("Argument out of bounds.", E_USER_ERROR);
         }
         $rowS = $row1 < $row2 ? $row1 : $row2;
@@ -1192,9 +1242,9 @@ class Storage extends Common2
         $rowE = $row2 > $row1 ? $row2 : $row1;
         $colE = $col2 > $col1 ? $col2 : $col1;
         if ($keepKeys) {
-            $arr = array_fill($rowS, $rowE - $rowS + 1, array_fill($colS, $colE - $colS + 1, ''));
+            $arr = \array_fill($rowS, $rowE - $rowS + 1, \array_fill($colS, $colE - $colS + 1, ''));
         } else {
-            $arr = array_fill(0, $rowE - $rowS + 1, array_fill(0, $colE - $colS + 1, ''));
+            $arr = \array_fill(0, $rowE - $rowS + 1, \array_fill(0, $colE - $colS + 1, ''));
         }
         $row = $rowS;
         $i = 0;
@@ -1203,12 +1253,12 @@ class Storage extends Common2
             $col = $colS;
             $j = 0;
             while ($col <= $colE) {
-                // Checks if the copied cell has a colspan/rowspan setting. 
-                // If the setting is found, it is defined so that the span ends 
-                // at the border of the area to be copied. 
-                // If a spanned cell is copied, and the spanbase is not inside the area 
-                // to be copied, the value of the cell is set to null. 
-                // This is handled in the pasteCells method so that the copied cell is 
+                // Checks if the copied cell has a colspan/rowspan setting.
+                // If the setting is found, it is defined so that the span ends
+                // at the border of the area to be copied.
+                // If a spanned cell is copied, and the spanbase is not inside the area
+                // to be copied, the value of the cell is set to null.
+                // This is handled in the pasteCells method so that the copied cell is
                 // not attached to the target.
                 if ($this->isCellSpanned($row, $col)) {
                     [$rowSpanBase, $colSpanBase] = $this->spanBase($row, $col);
@@ -1235,20 +1285,20 @@ class Storage extends Common2
                 $col++;
                 $j++;
             }
-            
+
             $row++;
             $i++;
         }
         return $arr;
     }
-    
+
     /**
      * Pastes cells copied with copyCells method to a storage.
-     * 
+     *
      * NOTE: We expect, that $cells array is returned by copyCells method.
      * Spanned cells won't be overwritten by this method. To overwrite spanned
      * cells, use splitSpanHorizontal and splitSpanVertical methods.
-     * 
+     *
      * @param array $cells
      * @param int $row
      * @param int $col
@@ -1262,49 +1312,49 @@ class Storage extends Common2
             return;
         }
         // The cells to be pasted must fit inside the storage!
-        if ($row + count($cells) - 1  >= $this->getRowCount() || $col + count($cells[0]) - 1 >= $this->getColCount()) {
+        if ($row + \count($cells) - 1  >= $this->getRowCount() || $col + \count($cells[0]) - 1 >= $this->getColCount()) {
             return;
-        } 
+        }
         // $i & $j: indexes of _structure
         // $iCell & $jCell: indexes of $cells array
-        $iCellMax = count($cells) - 1;
+        $iCellMax = \count($cells) - 1;
         $iMax = $row + $iCellMax;
         $i = $iMax;
         $iCell = $iCellMax;
         while ($i >= $row) {
-            $jCellMax = count($cells[$iCell]) - 1;
+            $jCellMax = \count($cells[$iCell]) - 1;
             $jMax = $col + $jCellMax;
             $j = $jMax;
             $jCell = $jCellMax;
             while ($j >= $col) {
-                // We must be able to paste a spanned cell, because, for example, 
-                // adjacent cells to be connected can have the setting colspan=2 
-                // in the first cell. 
-                // However, have to make sure that the span does not exceed the cells to be pasted. 
-                // + This is ensured when copying cells in the copyCells method. 
-                // We also need to make sure that if we paste to a cell with a 
-                // colspan/rowspan setting, there will be no "orphaned" spanned cells outside the 
-                // pasted cells. 
+                // We must be able to paste a spanned cell, because, for example,
+                // adjacent cells to be connected can have the setting colspan=2
+                // in the first cell.
+                // However, have to make sure that the span does not exceed the cells to be pasted.
+                // + This is ensured when copying cells in the copyCells method.
+                // We also need to make sure that if we paste to a cell with a
+                // colspan/rowspan setting, there will be no "orphaned" spanned cells outside the
+                // pasted cells.
                 // + This can be ensured by using splitSpan methods before joining.
-                if (is_null($cells[$iCell][$jCell])) {
+                if (\is_null($cells[$iCell][$jCell])) {
                     $j--;
                     $jCell--;
                     continue;
                 }
                 if ($j === $jMax && $this->isCellSpanned($i, $j + 1) === true) {
                     $this->splitSpanVertical($i, $j + 1);
-                } 
+                }
                 if ($j === $col && $this->isCellSpanned($i, $j) === true) {
                     $this->splitSpanVertical($i, $j);
                 }
                 if ($i === $iMax && $this->isCellSpanned($i + 1, $j) === true) {
                     $this->splitSpanHorizontal($i + 1, $j);
-                } 
+                }
                 if ($i === $row && $this->isCellSpanned($i, $j) === true) {
                     $this->splitSpanHorizontal($i, $j);
                 }
                 //~ if (!is_null($cells[$iCell][$jCell])) {
-                    $this->_structure[$i][$j] = isset($cells[$iCell][$jCell]['contents']) ? 
+                    $this->_structure[$i][$j] = isset($cells[$iCell][$jCell]['contents']) ?
                         $cells[$iCell][$jCell] : '__SPANNED__';
                 //~ }
                 $j--;
@@ -1327,7 +1377,7 @@ class Storage extends Common2
     public function setHeaderContents(int $row, int $col, $contents, string|array $attributes = null): void
     {
         $this->setCellContents($row, $col, $contents, 'TH');
-        if (!is_null($attributes)) {
+        if (!\is_null($attributes)) {
             $this->updateCellAttributes($row, $col, $attributes);
         }
     }
@@ -1398,7 +1448,7 @@ class Storage extends Common2
                     $this->setCellAttributes(
                         $row,
                         $i,
-                        $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]
+                        $attributes[$i - ((\ceil(($i + 1) / \count($attributes))) - 1) * \count($attributes)]
                     );
                 } else {
                     $this->setCellAttributes($row, $i, $attributes);
@@ -1434,7 +1484,7 @@ class Storage extends Common2
                     $this->updateCellAttributes(
                         $row,
                         $i,
-                        $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]
+                        $attributes[$i - ((\ceil(($i + 1) / \count($attributes))) - 1) * \count($attributes)]
                     );
                 } else {
                     $this->updateCellAttributes($row, $i, $attributes);
@@ -1509,7 +1559,7 @@ class Storage extends Common2
      */
     public function addCol(array $contents = null, string|array $attributes = null, string $type = 'td'): int
     {
-        if (isset($contents) && !is_array($contents)) {
+        if (isset($contents) && !\is_array($contents)) {
             return PEAR::raiseError('First parameter to HTML_Table::addCol ' .
                                     'must be an array');
         }
@@ -1517,7 +1567,7 @@ class Storage extends Common2
             $contents = array();
         }
 
-        $type = strtolower($type);
+        $type = \strtolower($type);
         $col = $this->_cols++;
         foreach ($contents as $row => $content) {
             if ($type == 'td') {
@@ -1545,7 +1595,7 @@ class Storage extends Common2
                 $this->setCellAttributes(
                     $i,
                     $col,
-                    $attributes[$i - ((ceil(($i + 1) / count($attributes))) - 1) * count($attributes)]
+                    $attributes[$i - ((\ceil(($i + 1) / \count($attributes))) - 1) * \count($attributes)]
                 );
             } else {
                 $this->setCellAttributes($i, $col, $attributes);
@@ -1656,7 +1706,7 @@ class Storage extends Common2
                         continue;
                     }
                     if (isset($this->_structure[$i][$j]['type'])) {
-                        $type = (strtolower($this->_structure[$i][$j]['type']) == 'th' ? 'th' : 'td');
+                        $type = (\strtolower($this->_structure[$i][$j]['type']) == 'th' ? 'th' : 'td');
                     }
                     if (isset($this->_structure[$i][$j]['attr'])) {
                         $attr = $this->_structure[$i][$j]['attr'];
@@ -1680,7 +1730,7 @@ class Storage extends Common2
                         }
                     }
                     if (is_array($contents)) {
-                        $contents = implode(', ', $contents);
+                        $contents = \implode(', ', $contents);
                     }
                     if (isset($this->_autoFill) && $contents === '') {
                         $contents = $this->_autoFill;
@@ -1774,20 +1824,20 @@ class Storage extends Common2
     private function _isAttributesArray(string|array $attributes = null): bool
     {
         if (is_array($attributes) && isset($attributes[0])) {
-            if (is_array($attributes[0]) || (is_string($attributes[0]) && count($attributes) > 1)) {
+            if (\is_array($attributes[0]) || (\is_string($attributes[0]) && \count($attributes) > 1)) {
                 return true;
             }
         }
         return false;
     }
-    
+
     public function keepAttributes(array $keep): void
     {
         for ($row = 0; $row < $this->getRowCount(); $row++) {
             if (isset($this->_structure[$row]['attr'])) {
                 self::keepAttributesArray($this->_structure[$row]['attr'], $keep);
             }
-            
+
             for ($col = 0; $col < $this->getColCount(); $col++) {
                 if (is_array($this->_structure[$row][$col])) {
                     self::keepAttributesArray($this->_structure[$row][$col]['attr'], $keep);
