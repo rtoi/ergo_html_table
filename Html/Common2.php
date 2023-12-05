@@ -30,6 +30,13 @@ abstract class Common2 extends HTML_Common2
         }
     }
 
+    /**
+     * Keep only names attributes in an array.
+     * 
+     * @param array $attr1 
+     * @param array $attr2 Array of keys to keep in array $attr1.
+     * @return void
+     */
     public static function keepAttributesArray(array &$attr1, array $attr2): void
     {
         $dropAttr = array_diff(array_keys($attr1), $attr2);
@@ -37,6 +44,51 @@ abstract class Common2 extends HTML_Common2
             unset($attr1[$key]);
         }
     }
+
+    /**
+     * Removes attributes from an array.
+     * 
+     * @param array $attr1
+     * @param array $attr2 Array of keys to remove from array $attr1.
+     * @return void
+     */
+    public static function removeAttributesArray(array &$attr1, array $attr2): void
+    {
+        // $attr1 = array_diff($attr1, $attr2);
+        foreach ($attr2 as $val) {
+            if (isset($attr1[$val])) {
+                unset($attr1[$val]);
+            }
+        }
+    }
+
+    public static function styleStrToArray(string $style): array
+    {
+        $arr = \explode(';', $style);
+        $out = [];
+        foreach ($arr as $val) {
+            $tmp = explode(':', $val);
+            if (count($tmp) !== 2) {
+                continue;
+            }
+            array_walk($tmp, function (&$val) {$val = trim($val);});
+            $out[$tmp[0]] = $tmp[1];
+        }
+        return $out;
+    }
+    
+    public static function styleArrayToStr(array $style): string
+    {
+        $str = '';
+        foreach ($style as $key => $val) {
+            $str .= $key;
+            $str .= str_ends_with($key, ':') ? ' ' : ': ';
+            $str .= $val;
+            $str .= str_ends_with($val, ';') ? '' : ';';
+        }
+        return $str;
+    }
+
 
     /**
      * Checks whether the element has given CSS class
