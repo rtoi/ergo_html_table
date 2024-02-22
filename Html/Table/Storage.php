@@ -796,13 +796,16 @@ class Storage extends Common2
      * Cuts one or more columns from table and return them in an array.
      *
      * Columns cut from table can later be pasted back to Storage object with
-     * pasteCols method.
+     * pasteCols method. This method breaks spanned columns.
+     * Use method deleteCols to cut column(s) from merged (spanned) columns 
+     * and to keep remaining columns still merged.
      *
      * @param int       $colStart   First column to be cut from table
      * @param int|null  $colEnd     Last column to be cut from table. If this is not
      *                              set, only one column is cut.
      * @return array                Columns cut from table in an array.
      * @see HTML_Table_Storage::pasteCols
+     * @see HTML_Table_Storage::deleteCols
      * @author Risto Toivonen <risto@ergonomiapalvelu.fi>
      */
     public function cutCols(int $colStart, ?int $colEnd = null): array
@@ -852,7 +855,7 @@ class Storage extends Common2
             $colspan = $this->_structure[$row][$colS1]['attr']['colspan'] ?? 1;
             $rowspan = $this->_structure[$row][$colS1]['attr']['rowspan'] ?? 1;
 
-            if ($colS1 === $colS2 && $colS1 < $colStart && $colspan > ($colStart + $length)) {
+            if ($colS1 === $colS2 && $colS1 < $colStart && ($colS1 + $colspan) >= ($colStart + $length)) {
                 $this->_structure[$rowS][$colS1]['attr']['colspan'] = $colspan - $length;
                 $row += $rowspan;
                 continue;
