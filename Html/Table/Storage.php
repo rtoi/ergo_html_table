@@ -80,7 +80,7 @@ class Storage extends Common2
      * @var    string
      * @access private
      */
-    private string $_autoFill = '&nbsp;';
+    private string $autoFill = '&nbsp;';
 
     /**
      * Automatically adds a new row or column if a given row or column index
@@ -88,42 +88,42 @@ class Storage extends Common2
      * @var    bool
      * @access private
      */
-    private bool $_autoGrow = true;
+    private bool $autoGrow = true;
 
     /**
      * Array containing the table structure
      * @var     array
      * @access  private
      */
-    private array $_structure = [];
+    private array $structure = [];
 
     /**
      * Number of rows composing in the table
      * @var     int
      * @access  private
      */
-    private int $_rows = 0;
+    private int $rows = 0;
 
     /**
      * Number of column composing the table
      * @var     int
      * @access  private
      */
-    private int $_cols = 0;
+    private int $cols = 0;
 
     /**
      * Tracks the level of nested tables
      * @var    int
      * @access private
      */
-    private int $_nestLevel = 0;
+    private int $nestLevel = 0;
 
     /**
      * Whether to use <thead>, <tfoot> and <tbody> or not
      * @var    bool
      * @access private
      */
-    private bool $_useTGroups = false;
+    private bool $useTGroups = false;
 
     /**
      * Class constructor
@@ -137,7 +137,7 @@ class Storage extends Common2
     {
         parent::__construct();
         $this->setIndentLevel($tabOffset);
-        $this->_useTGroups = $useTGroups;
+        $this->useTGroups = $useTGroups;
     }
 
     /**
@@ -147,7 +147,7 @@ class Storage extends Common2
      */
     public function setUseTGroups(bool $useTGroups): void
     {
-        $this->_useTGroups = $useTGroups;
+        $this->useTGroups = $useTGroups;
     }
 
     /**
@@ -157,7 +157,7 @@ class Storage extends Common2
      */
     public function getUseTGroups(): bool
     {
-        return $this->_useTGroups;
+        return $this->useTGroups;
     }
 
     /**
@@ -167,7 +167,7 @@ class Storage extends Common2
      */
     public function setAutoFill(string $fill): void
     {
-        $this->_autoFill = $fill;
+        $this->autoFill = $fill;
     }
 
     /**
@@ -177,7 +177,7 @@ class Storage extends Common2
      */
     public function getAutoFill(): string
     {
-        return $this->_autoFill;
+        return $this->autoFill;
     }
 
     /**
@@ -187,7 +187,7 @@ class Storage extends Common2
      */
     public function setAutoGrow(bool $grow): void
     {
-        $this->_autoGrow = $grow;
+        $this->autoGrow = $grow;
     }
 
     /**
@@ -197,7 +197,7 @@ class Storage extends Common2
      */
     public function getAutoGrow(): bool
     {
-        return $this->_autoGrow;
+        return $this->autoGrow;
     }
 
     /**
@@ -207,7 +207,7 @@ class Storage extends Common2
      */
     public function setRowCount(int $rows): void
     {
-        $this->_rows = $rows;
+        $this->rows = $rows;
     }
 
     /**
@@ -217,7 +217,7 @@ class Storage extends Common2
      */
     public function setColCount(int $cols): void
     {
-        $this->_cols = $cols;
+        $this->cols = $cols;
     }
 
     /**
@@ -227,7 +227,7 @@ class Storage extends Common2
      */
     public function getRowCount(): int
     {
-        return $this->_rows;
+        return $this->rows;
     }
 
     /**
@@ -244,14 +244,14 @@ class Storage extends Common2
     {
         if (!\is_null($row)) {
             $count = 0;
-            foreach ($this->_structure[$row] as $cell) {
+            foreach ($this->structure[$row] as $cell) {
                 if (\is_array($cell)) {
                     $count++;
                 }
             }
             return $count;
         }
-        return $this->_cols;
+        return $this->cols;
     }
 
     /**
@@ -262,9 +262,9 @@ class Storage extends Common2
      */
     public function setRowType(int $row, string $type): void
     {
-        for ($counter = 0; $counter < $this->_cols; $counter++) {
+        for ($counter = 0; $counter < $this->cols; $counter++) {
             if (!$this->isCellSpanned($row, $counter)) {
-                $this->_structure[$row][$counter]['type'] = $type;
+                $this->structure[$row][$counter]['type'] = $type;
             }
         }
     }
@@ -277,9 +277,9 @@ class Storage extends Common2
      */
     public function setColType(int $col, string $type): void
     {
-        for ($counter = 0; $counter < $this->_rows; $counter++) {
+        for ($counter = 0; $counter < $this->rows; $counter++) {
             if (!$this->isCellSpanned($counter, $col)) {
-                $this->_structure[$counter][$col]['type'] = $type;
+                $this->structure[$counter][$col]['type'] = $type;
             }
         }
     }
@@ -300,18 +300,18 @@ class Storage extends Common2
     public function setCellAttributes(int $row, int $col, string|array $attributes = null)
     {
         if (
-            isset($this->_structure[$row][$col])
-            && $this->_structure[$row][$col] == '__SPANNED__'
+            isset($this->structure[$row][$col])
+            && $this->structure[$row][$col] == '__SPANNED__'
         ) {
              return;
         }
         $attributes = self::prepareAttributes($attributes);
-        $err = $this->_adjustEnds($row, $col, 'setCellAttributes', $attributes);
+        $err = $this->adjustEnds($row, $col, 'setCellAttributes', $attributes);
         if (PEAR::isError($err)) {
             return $err;
         }
-        $this->_structure[$row][$col]['attr'] = $attributes;
-        $this->_updateSpanGrid($row, $col);
+        $this->structure[$row][$col]['attr'] = $attributes;
+        $this->updateSpanGrid($row, $col);
     }
 
     public function hasCellClass(int $row, int $col, string $class): bool
@@ -357,8 +357,8 @@ class Storage extends Common2
             $col = $colOrig + ($row < $rowOrig && $insert) * 1;
             while ($col >= 0) {
                 if (!$this->isCellSpanned($row, $col)) {
-                    $colspan = $this->_structure[$row][$col]['attr']['colspan'] ?? 1;
-                    $rowspan = $this->_structure[$row][$col]['attr']['rowspan'] ?? 1;
+                    $colspan = $this->structure[$row][$col]['attr']['colspan'] ?? 1;
+                    $rowspan = $this->structure[$row][$col]['attr']['rowspan'] ?? 1;
                     if (($row + $rowspan - 1) >= $rowOrig && ($col + $colspan - 1) >= $colOrig) {
                         return [$row, $col - ($row < $rowOrig && $insert) * 1];
                     }
@@ -387,18 +387,18 @@ class Storage extends Common2
         if ($row === $rowS) {
             return;
         }
-        $rowSpanBase = $this->_structure[$rowS][$colS]['attr']['rowspan'] ?? 1;
+        $rowSpanBase = $this->structure[$rowS][$colS]['attr']['rowspan'] ?? 1;
         $rowSpanNew = ($rowS + $rowSpanBase - 1) - $row + 1;
         $rowSpanUpdated = $row - $rowS;
-        $this->updateAttrArray($this->_structure[$rowS][$colS]['attr'], ['rowspan' => $rowSpanUpdated]);
-        $this->tidyAttr($this->_structure[$rowS][$colS]);
-        $cellBase = $this->_structure[$rowS][$colS];
-        $this->_structure[$row][$colS] = ['type' => '', 'contents' => '', 'attr' => []];
-        $this->_structure[$row][$colS]['type'] = $cellBase['type'];
-        $this->_structure[$row][$colS]['attr'] = $cellBase['attr'];
-        $this->updateAttrArray($this->_structure[$row][$colS]['attr'], ['rowspan' => $rowSpanNew]);
-        $this->tidyAttr($this->_structure[$row][$colS]);
-        $this->_updateSpanGrid($row, $colS);
+        $this->updateAttrArray($this->structure[$rowS][$colS]['attr'], ['rowspan' => $rowSpanUpdated]);
+        $this->tidyAttr($this->structure[$rowS][$colS]);
+        $cellBase = $this->structure[$rowS][$colS];
+        $this->structure[$row][$colS] = ['type' => '', 'contents' => '', 'attr' => []];
+        $this->structure[$row][$colS]['type'] = $cellBase['type'];
+        $this->structure[$row][$colS]['attr'] = $cellBase['attr'];
+        $this->updateAttrArray($this->structure[$row][$colS]['attr'], ['rowspan' => $rowSpanNew]);
+        $this->tidyAttr($this->structure[$row][$colS]);
+        $this->updateSpanGrid($row, $colS);
     }
 
     /**
@@ -417,18 +417,18 @@ class Storage extends Common2
         if ($col === $colS) {
             return;
         }
-        $colSpanBase = $this->_structure[$rowS][$colS]['attr']['colspan'] ?? 1;
+        $colSpanBase = $this->structure[$rowS][$colS]['attr']['colspan'] ?? 1;
         $colSpanNew = ($colS + $colSpanBase - 1) - $col + 1;
         $colSpanUpdated = $col - $colS;
-        $this->updateAttrArray($this->_structure[$rowS][$colS]['attr'], ['colspan' => $colSpanUpdated]);
-        $this->tidyAttr($this->_structure[$rowS][$colS]);
-        $cellBase = $this->_structure[$rowS][$colS];
-        $this->_structure[$rowS][$col] = ['type' => '', 'contents' => '', 'attr' => []];
-        $this->_structure[$rowS][$col]['type'] = $cellBase['type'];
-        $this->_structure[$rowS][$col]['attr'] = $cellBase['attr'];
-        $this->updateAttrArray($this->_structure[$rowS][$col]['attr'], ['colspan' => $colSpanNew]);
-        $this->tidyAttr($this->_structure[$rowS][$col]);
-        $this->_updateSpanGrid($row, $colS);
+        $this->updateAttrArray($this->structure[$rowS][$colS]['attr'], ['colspan' => $colSpanUpdated]);
+        $this->tidyAttr($this->structure[$rowS][$colS]);
+        $cellBase = $this->structure[$rowS][$colS];
+        $this->structure[$rowS][$col] = ['type' => '', 'contents' => '', 'attr' => []];
+        $this->structure[$rowS][$col]['type'] = $cellBase['type'];
+        $this->structure[$rowS][$col]['attr'] = $cellBase['attr'];
+        $this->updateAttrArray($this->structure[$rowS][$col]['attr'], ['colspan' => $colSpanNew]);
+        $this->tidyAttr($this->structure[$rowS][$col]);
+        $this->updateSpanGrid($row, $colS);
     }
 
     /**
@@ -443,19 +443,19 @@ class Storage extends Common2
     public function updateCellAttributes(int $row, int $col, string|array $attributes = null)
     {
         if (
-            isset($this->_structure[$row][$col])
-            && $this->_structure[$row][$col] == '__SPANNED__'
+            isset($this->structure[$row][$col])
+            && $this->structure[$row][$col] == '__SPANNED__'
         ) {
             return;
         }
         $attributes = self::prepareAttributes($attributes);
-        $err = $this->_adjustEnds($row, $col, 'updateCellAttributes', $attributes);
+        $err = $this->adjustEnds($row, $col, 'updateCellAttributes', $attributes);
         if (PEAR::isError($err)) {
             return $err;
         }
-        $this->_structure[$row][$col]['attr'] ??= [];
-        $this->updateAttrArray($this->_structure[$row][$col]['attr'], $attributes);
-        $this->_updateSpanGrid($row, $col);
+        $this->structure[$row][$col]['attr'] ??= [];
+        $this->updateAttrArray($this->structure[$row][$col]['attr'], $attributes);
+        $this->updateSpanGrid($row, $col);
     }
 
     /**
@@ -468,15 +468,15 @@ class Storage extends Common2
     public function getCellAttributes(int $row, int $col): array
     {
         if (
-            isset($this->_structure[$row][$col])
-            && $this->_structure[$row][$col] != '__SPANNED__'
+            isset($this->structure[$row][$col])
+            && $this->structure[$row][$col] != '__SPANNED__'
         ) {
-            if (isset($this->_structure[$row][$col]['attr'])) {
-                return $this->_structure[$row][$col]['attr'];
+            if (isset($this->structure[$row][$col]['attr'])) {
+                return $this->structure[$row][$col]['attr'];
             } else {
                 return [];
             }
-        } elseif (!isset($this->_structure[$row][$col])) {
+        } elseif (!isset($this->structure[$row][$col])) {
             return PEAR::raiseError('Invalid table cell reference[' .
                 $row . '][' . $col . '] in HTML_Table::getCellAttributes');
         }
@@ -545,17 +545,17 @@ class Storage extends Common2
     private function _setSingleCellContents(int $row, int $col, $contents, string $type = 'TD')
     {
         if (
-            isset($this->_structure[$row][$col])
-            && $this->_structure[$row][$col] == '__SPANNED__'
+            isset($this->structure[$row][$col])
+            && $this->structure[$row][$col] == '__SPANNED__'
         ) {
             return;
         }
-        $err = $this->_adjustEnds($row, $col, 'setCellContents');
+        $err = $this->adjustEnds($row, $col, 'setCellContents');
         if (PEAR::isError($err)) {
             return $err;
         }
-        $this->_structure[$row][$col]['contents'] = $contents;
-        $this->_structure[$row][$col]['type'] = $type;
+        $this->structure[$row][$col]['contents'] = $contents;
+        $this->structure[$row][$col]['type'] = $type;
     }
 
     /**
@@ -594,16 +594,16 @@ class Storage extends Common2
     public function getCellContents(int $row, int $col)
     {
         if (
-            isset($this->_structure[$row][$col])
-            && $this->_structure[$row][$col] == '__SPANNED__'
+            isset($this->structure[$row][$col])
+            && $this->structure[$row][$col] == '__SPANNED__'
         ) {
             return null;
         }
-        if (!isset($this->_structure[$row][$col])) {
+        if (!isset($this->structure[$row][$col])) {
             return PEAR::raiseError('Invalid table cell reference[' .
                 $row . '][' . $col . '] in HTML_Table::getCellContents');
         }
-        return $this->_structure[$row][$col]['contents'];
+        return $this->structure[$row][$col]['contents'];
     }
 
     /**
@@ -619,19 +619,19 @@ class Storage extends Common2
      */
     public function getCellType(int $row, int $col): ?string
     {
-        if (!isset($this->_structure[$row][$col]) || $this->isCellSpanned($row, $col)) {
+        if (!isset($this->structure[$row][$col]) || $this->isCellSpanned($row, $col)) {
             return null;
         }
-        return \strtolower($this->_structure[$row][$col]['type'] ?? 'td');
+        return \strtolower($this->structure[$row][$col]['type'] ?? 'td');
     }
 
     public function setCellType(int $row, int $col, string $type = 'td'): void
     {
         $type = \strtolower($type);
-        if (!isset($this->_structure[$row][$col]) || $this->isCellSpanned($row, $col)) {
+        if (!isset($this->structure[$row][$col]) || $this->isCellSpanned($row, $col)) {
             return;
         }
-        $this->_structure[$row][$col]['type'] = $type;
+        $this->structure[$row][$col]['type'] = $type;
     }
 
 
@@ -647,10 +647,10 @@ class Storage extends Common2
      */
     public function isCellSpanned(int $row, int $col): ?bool
     {
-        if (!isset($this->_structure[$row][$col])) {
+        if (!isset($this->structure[$row][$col])) {
             return null;
         }
-        return $this->_structure[$row][$col] === '__SPANNED__';
+        return $this->structure[$row][$col] === '__SPANNED__';
     }
 
     /**
@@ -715,7 +715,7 @@ class Storage extends Common2
         $this->splitAtRow($rowEnd + 1);
         $this->splitAtRow($rowStart);
         $this->setRowCount($this->getRowCount() - $length);
-        return \array_splice($this->_structure, $rowStart, $length);
+        return \array_splice($this->structure, $rowStart, $length);
     }
 
     /**
@@ -738,11 +738,11 @@ class Storage extends Common2
         $this->splitAtRow($atRow);
         $tmp = [];
         if ($atRow <= $rowCountOrig - 1) {
-            $tmp = \array_splice($this->_structure, $atRow);
+            $tmp = \array_splice($this->structure, $atRow);
         }
-        $this->_structure = \array_merge($this->_structure, $arr);
+        $this->structure = \array_merge($this->structure, $arr);
         if (count($tmp)) {
-            $this->_structure = \array_merge($this->_structure, $tmp);
+            $this->structure = \array_merge($this->structure, $tmp);
         }
         $this->setRowCount($rowCountOrig + count($arr));
         if ($rowCountOrig === 0) {
@@ -781,11 +781,11 @@ class Storage extends Common2
         $row = 0;
         $out = [];
         while ($row < $this->getRowCount()) {
-            $attr = $this->_structure[$row]['attr'] ?? [];
-            unset($this->_structure[$row]['attr']);
-            $out[] = \array_splice($this->_structure[$row], $col, $length);
+            $attr = $this->structure[$row]['attr'] ?? [];
+            unset($this->structure[$row]['attr']);
+            $out[] = \array_splice($this->structure[$row], $col, $length);
             if (\count($attr)) {
-                $this->_structure[$row]['attr'] = $attr;
+                $this->structure[$row]['attr'] = $attr;
             }
             $row++;
         }
@@ -797,7 +797,7 @@ class Storage extends Common2
      *
      * Columns cut from table can later be pasted back to Storage object with
      * pasteCols method. This method breaks spanned columns.
-     * Use method deleteCols to cut column(s) from merged (spanned) columns 
+     * Use method deleteCols to cut column(s) from merged (spanned) columns
      * and to keep remaining columns still merged.
      *
      * @param int       $colStart   First column to be cut from table
@@ -852,11 +852,11 @@ class Storage extends Common2
         while ($row < $this->getRowCount()) {
             [$rowS, $colS1] = $this->spanBase($row, $colStart);
             [$rowS, $colS2] = $this->spanBase($row, $colStart + $length);
-            $colspan = $this->_structure[$row][$colS1]['attr']['colspan'] ?? 1;
-            $rowspan = $this->_structure[$row][$colS1]['attr']['rowspan'] ?? 1;
+            $colspan = $this->structure[$row][$colS1]['attr']['colspan'] ?? 1;
+            $rowspan = $this->structure[$row][$colS1]['attr']['rowspan'] ?? 1;
 
             if ($colS1 === $colS2 && $colS1 < $colStart && ($colS1 + $colspan) >= ($colStart + $length)) {
-                $this->_structure[$rowS][$colS1]['attr']['colspan'] = $colspan - $length;
+                $this->structure[$rowS][$colS1]['attr']['colspan'] = $colspan - $length;
                 $row += $rowspan;
                 continue;
             }
@@ -882,11 +882,11 @@ class Storage extends Common2
     {
         $row = 0;
         while ($row < $this->getRowCount()) {
-            $attr = $this->_structure[$row]['attr'] ?? [];
-            unset($this->_structure[$row]['attr']);
-            $this->_structure[$row] = \array_merge($this->_structure[$row], $arr[$row]);
+            $attr = $this->structure[$row]['attr'] ?? [];
+            unset($this->structure[$row]['attr']);
+            $this->structure[$row] = \array_merge($this->structure[$row], $arr[$row]);
             if (\count($attr)) {
-                $this->_structure[$row]['attr'] = $attr;
+                $this->structure[$row]['attr'] = $attr;
             }
             $row++;
         }
@@ -938,13 +938,13 @@ class Storage extends Common2
             $this->tidyAttr($cell);
             $cell = [$cell];
         }
-        $attr = $this->_structure[$row]['attr'] ?? [];
-        unset($this->_structure[$row]['attr']);
-        $arr1 = $col > 0 ? array_slice($this->_structure[$row], 0, $col) : [];
-        $arr2 = $col < $this->getColCount() ? array_slice($this->_structure[$row], $col) : [];
-        $this->_structure[$row] = \array_merge($arr1, $cell, $arr2);
+        $attr = $this->structure[$row]['attr'] ?? [];
+        unset($this->structure[$row]['attr']);
+        $arr1 = $col > 0 ? array_slice($this->structure[$row], 0, $col) : [];
+        $arr2 = $col < $this->getColCount() ? array_slice($this->structure[$row], $col) : [];
+        $this->structure[$row] = \array_merge($arr1, $cell, $arr2);
         if (\count($attr)) {
-            $this->_structure[$row]['attr'] = $attr;
+            $this->structure[$row]['attr'] = $attr;
         }
     }
 
@@ -1007,10 +1007,10 @@ class Storage extends Common2
         if (($vertical && $horizontal) || (!$vertical && !$horizontal)) {
             return;
         }
-        $colSpan1 = (int) ($this->_structure[$rowS1][$colS1]['attr']['colspan'] ?? 1);
-        $rowSpan1 = (int) ($this->_structure[$rowS1][$colS1]['attr']['rowspan'] ?? 1);
-        $colSpan2 = (int) ($this->_structure[$rowS2][$colS2]['attr']['colspan'] ?? 1);
-        $rowSpan2 = (int) ($this->_structure[$rowS2][$colS2]['attr']['rowspan'] ?? 1);
+        $colSpan1 = (int) ($this->structure[$rowS1][$colS1]['attr']['colspan'] ?? 1);
+        $rowSpan1 = (int) ($this->structure[$rowS1][$colS1]['attr']['rowspan'] ?? 1);
+        $colSpan2 = (int) ($this->structure[$rowS2][$colS2]['attr']['colspan'] ?? 1);
+        $rowSpan2 = (int) ($this->structure[$rowS2][$colS2]['attr']['rowspan'] ?? 1);
         if (
             ($vertical && ($colSpan1 !== $colSpan2)) ||
             ($horizontal && ($rowSpan1 !== $rowSpan2))
@@ -1031,18 +1031,18 @@ class Storage extends Common2
             return;
         }
         $glue = $glue ?? ($horizontal ? ' ' : '<br>');
-        $glue = \strlen($this->_structure[$r1][$c1]['contents']) ? $glue : '';
-        if (strlen($this->_structure[$r2][$c2]['contents'])) {
-            $this->_structure[$r1][$c1]['contents'] .= $glue . $this->_structure[$r2][$c2]['contents'];
+        $glue = \strlen($this->structure[$r1][$c1]['contents']) ? $glue : '';
+        if (strlen($this->structure[$r2][$c2]['contents'])) {
+            $this->structure[$r1][$c1]['contents'] .= $glue . $this->structure[$r2][$c2]['contents'];
         }
         if ($horizontal) {
-            $this->_structure[$r1][$c1]['attr']['colspan'] = $colSpan1 + $colSpan2;
+            $this->structure[$r1][$c1]['attr']['colspan'] = $colSpan1 + $colSpan2;
         } else {
-            $this->_structure[$r1][$c1]['attr']['rowspan'] = $rowSpan1 + $rowSpan2;
+            $this->structure[$r1][$c1]['attr']['rowspan'] = $rowSpan1 + $rowSpan2;
         }
-        $this->tidyAttr($this->_structure[$r1][$c1]);
-        $this->tidyAttr($this->_structure[$r2][$c2]);
-        $this->_structure[$r2][$c2] = '__SPANNED__';
+        $this->tidyAttr($this->structure[$r1][$c1]);
+        $this->tidyAttr($this->structure[$r2][$c2]);
+        $this->structure[$r2][$c2] = '__SPANNED__';
     }
 
     /**
@@ -1076,9 +1076,9 @@ class Storage extends Common2
             if (
                 \strlen($indent) &&
                 !$this->isCellSpanned($row, $col) &&
-                \strlen(\trim($this->_structure[$row][$col]['contents'])) === 0
+                \strlen(\trim($this->structure[$row][$col]['contents'])) === 0
             ) {
-                $this->_structure[$row][$col]['contents'] = $indent;
+                $this->structure[$row][$col]['contents'] = $indent;
                 $glue = '';
             }
             $this->mergeCells($row, $col, $row, $col + 1, $glue);
@@ -1109,7 +1109,7 @@ class Storage extends Common2
             }
 
             [$sR, $sC] = $this->spanBase($row, $col, true);
-            $sColSpan = $this->_structure[$sR][$sC]['attr']['colspan'] ?? 1;
+            $sColSpan = $this->structure[$sR][$sC]['attr']['colspan'] ?? 1;
             $attr = $this->getCellAttributes($row, $col);
             unset($attr['rowspan']);
             unset($attr['colspan']);
@@ -1121,7 +1121,7 @@ class Storage extends Common2
             }
             $cell = '__SPANNED__';
             if ($sR === $row) {
-                $this->_structure[$row][$sC]['attr']['colspan'] = $sColSpan + 1;
+                $this->structure[$row][$sC]['attr']['colspan'] = $sColSpan + 1;
             }
             $this->pushToRow($cell, $row, $col);
             $row++;
@@ -1150,8 +1150,8 @@ class Storage extends Common2
         $col = 0;
         while ($col < $this->getColCount() && !($row === 0 || $row === $this->getRowCount())) {
             [$sR, $sC] = $this->spanBase($row, $col);
-            $sColSpan = $this->_structure[$sR][$sC]['attr']['colspan'] ?? 1;
-            $sRowSpan = $this->_structure[$sR][$sC]['attr']['rowspan'] ?? 1;
+            $sColSpan = $this->structure[$sR][$sC]['attr']['colspan'] ?? 1;
+            $sRowSpan = $this->structure[$sR][$sC]['attr']['rowspan'] ?? 1;
             $attr = $this->getCellAttributes($row, $col);
             unset($attr['rowspan']);
             unset($attr['colspan']);
@@ -1163,14 +1163,14 @@ class Storage extends Common2
             }
             $cell = '__SPANNED__';
             if ($sC === $col) {
-                $this->_structure[$sR][$col]['attr']['rowspan'] = $sRowSpan + 1;
+                $this->structure[$sR][$col]['attr']['rowspan'] = $sRowSpan + 1;
             }
             $newRow[$col] = $cell;
             $col++;
         }
-        $arr1 = $row > 0 ? \array_slice($this->_structure, 0, $row) : [];
-        $arr2 = $row < $this->getRowCount() ? \array_slice($this->_structure, $row) : [];
-        $this->_structure = \array_merge($arr1, [$newRow], $arr2);
+        $arr1 = $row > 0 ? \array_slice($this->structure, 0, $row) : [];
+        $arr2 = $row < $this->getRowCount() ? \array_slice($this->structure, $row) : [];
+        $this->structure = \array_merge($arr1, [$newRow], $arr2);
         $this->setRowCount($this->getRowCount() + 1);
     }
 
@@ -1190,14 +1190,14 @@ class Storage extends Common2
         $row = 0;
         while ($row < $this->getRowCount()) {
             [$sR, $sC] = $this->spanBase($row, $col, true);
-            $sColSpan = $this->_structure[$sR][$sC]['attr']['colspan'] ?? 1;
+            $sColSpan = $this->structure[$sR][$sC]['attr']['colspan'] ?? 1;
             $attr = $this->getCellAttributes($row, $col);
             unset($attr['rowspan']);
             unset($attr['colspan']);
             $cell = '__SPANNED__';
             $this->pushToRow($cell, $row, $col + 1);
             if ($sR === $row) {
-                $this->_structure[$row][$sC]['attr']['colspan'] = $sColSpan + 1;
+                $this->structure[$row][$sC]['attr']['colspan'] = $sColSpan + 1;
             }
             $row++;
         }
@@ -1268,11 +1268,11 @@ class Storage extends Common2
                     $cellData = self::isCellInArea($rowS, $colS, $rowE, $colE, $rowSpanBase, $colSpanBase) ?
                         '__SPANNED__' : null;
                 } else {
-                    $rowSpan = $this->_structure[$row][$col]['attr']['rowspan'] ?? 1;
+                    $rowSpan = $this->structure[$row][$col]['attr']['rowspan'] ?? 1;
                     $rowSpan = ($row + $rowSpan - 1 > $rowE) ? $rowE - $row + 1 : $rowSpan;
-                    $colSpan = $this->_structure[$row][$col]['attr']['colspan'] ?? 1;
+                    $colSpan = $this->structure[$row][$col]['attr']['colspan'] ?? 1;
                     $colSpan = ($col + $colSpan - 1 > $colE) ? $colE - $col + 1 : $colSpan;
-                    $cellData = $this->_structure[$row][$col];
+                    $cellData = $this->structure[$row][$col];
                     if (!isset($cellData['attr'])) {
                         $cellData['attr'] = [];
                     }
@@ -1357,7 +1357,7 @@ class Storage extends Common2
                     $this->splitSpanHorizontal($i, $j);
                 }
                 //~ if (!is_null($cells[$iCell][$jCell])) {
-                    $this->_structure[$i][$j] = isset($cells[$iCell][$jCell]['contents']) ?
+                    $this->structure[$i][$j] = isset($cells[$iCell][$jCell]['contents']) ?
                         $cells[$iCell][$jCell] : '__SPANNED__';
                 //~ }
                 $j--;
@@ -1416,7 +1416,7 @@ class Storage extends Common2
             $contents = array();
         }
 
-        $row = $this->_rows++;
+        $row = $this->rows++;
         $type = is_array($type) ? array_map('strtolower', $type) : strtolower($type);
         foreach ($contents as $col => $content) {
             if ((is_string($type) && $type === 'td') || (is_array($type) && $type[$col] === 'td')) {
@@ -1445,8 +1445,8 @@ class Storage extends Common2
     public function setRowAttributes(int $row, string|array $attributes = null, bool $inTR = false)
     {
         if (!$inTR) {
-            $multiAttr = $this->_isAttributesArray($attributes);
-            for ($i = 0; $i < $this->_cols; $i++) {
+            $multiAttr = $this->isAttributesArray($attributes);
+            for ($i = 0; $i < $this->cols; $i++) {
                 if ($multiAttr) {
                     $this->setCellAttributes(
                         $row,
@@ -1459,11 +1459,11 @@ class Storage extends Common2
             }
         } else {
             $attributes = self::prepareAttributes($attributes);
-            $err = $this->_adjustEnds($row, 0, 'setRowAttributes', $attributes);
+            $err = $this->adjustEnds($row, 0, 'setRowAttributes', $attributes);
             if (PEAR::isError($err)) {
                 return $err;
             }
-            $this->_structure[$row]['attr'] = $attributes;
+            $this->structure[$row]['attr'] = $attributes;
         }
     }
 
@@ -1481,8 +1481,8 @@ class Storage extends Common2
     public function updateRowAttributes(int $row, string|array $attributes = null, bool $inTR = false)
     {
         if (!$inTR) {
-            $multiAttr = $this->_isAttributesArray($attributes);
-            for ($i = 0; $i < $this->_cols; $i++) {
+            $multiAttr = $this->isAttributesArray($attributes);
+            for ($i = 0; $i < $this->cols; $i++) {
                 if ($multiAttr) {
                     $this->updateCellAttributes(
                         $row,
@@ -1495,12 +1495,12 @@ class Storage extends Common2
             }
         } else {
             $attributes = self::prepareAttributes($attributes);
-            $err = $this->_adjustEnds($row, 0, 'updateRowAttributes', $attributes);
+            $err = $this->adjustEnds($row, 0, 'updateRowAttributes', $attributes);
             if (PEAR::isError($err)) {
                 return $err;
             }
-            $this->_structure[$row]['attr'] ??= [];
-            $this->updateAttrArray($this->_structure[$row]['attr'], $attributes);
+            $this->structure[$row]['attr'] ??= [];
+            $this->updateAttrArray($this->structure[$row]['attr'], $attributes);
         }
     }
 
@@ -1512,8 +1512,8 @@ class Storage extends Common2
      */
     public function getRowAttributes(int $row): array
     {
-        if (isset($this->_structure[$row]['attr'])) {
-            return $this->_structure[$row]['attr'];
+        if (isset($this->structure[$row]['attr'])) {
+            return $this->structure[$row]['attr'];
         }
         return [];
     }
@@ -1540,7 +1540,7 @@ class Storage extends Common2
         bool $inTR = false,
         int $firstAttributes = 1
     ): void {
-        for ($row = $start; $row < $this->_rows; $row++) {
+        for ($row = $start; $row < $this->rows; $row++) {
             if (($row + $start + ($firstAttributes - 1)) % 2 == 0) {
                 $attributes = $attributes1;
             } else {
@@ -1571,7 +1571,7 @@ class Storage extends Common2
         }
 
         $type = \strtolower($type);
-        $col = $this->_cols++;
+        $col = $this->cols++;
         foreach ($contents as $row => $content) {
             if ($type == 'td') {
                 $this->setCellContents($row, $col, $content);
@@ -1592,8 +1592,8 @@ class Storage extends Common2
      */
     public function setColAttributes(int $col, string|array $attributes = null): void
     {
-        $multiAttr = $this->_isAttributesArray($attributes);
-        for ($i = 0; $i < $this->_rows; $i++) {
+        $multiAttr = $this->isAttributesArray($attributes);
+        for ($i = 0; $i < $this->rows; $i++) {
             if ($multiAttr) {
                 $this->setCellAttributes(
                     $i,
@@ -1608,14 +1608,14 @@ class Storage extends Common2
 
     public function addColClass(int $col, array|string $class): void
     {
-        for ($i = 0; $i < $this->_rows; $i++) {
+        for ($i = 0; $i < $this->rows; $i++) {
             $this->addCellClass($i, $col, $class);
         }
     }
 
     public function removeColClass(int $col, array|string $class): void
     {
-        for ($i = 0; $i < $this->_rows; $i++) {
+        for ($i = 0; $i < $this->rows; $i++) {
             $this->removeCellClass($i, $col, $class);
         }
     }
@@ -1629,8 +1629,8 @@ class Storage extends Common2
      */
     public function updateColAttributes(int $col, string|array $attributes = null): void
     {
-        $multiAttr = $this->_isAttributesArray($attributes);
-        for ($i = 0; $i < $this->_rows; $i++) {
+        $multiAttr = $this->isAttributesArray($attributes);
+        for ($i = 0; $i < $this->rows; $i++) {
             if ($multiAttr) {
                 $this->updateCellAttributes(
                     $i,
@@ -1651,7 +1651,7 @@ class Storage extends Common2
      */
     public function setAllAttributes(string|array $attributes = null): void
     {
-        for ($i = 0; $i < $this->_rows; $i++) {
+        for ($i = 0; $i < $this->rows; $i++) {
             $this->setRowAttributes($i, $attributes);
         }
     }
@@ -1664,7 +1664,7 @@ class Storage extends Common2
      */
     public function updateAllAttributes(string|array $attributes = null): void
     {
-        for ($i = 0; $i < $this->_rows; $i++) {
+        for ($i = 0; $i < $this->rows; $i++) {
             $this->updateRowAttributes($i, $attributes);
         }
     }
@@ -1689,33 +1689,33 @@ class Storage extends Common2
             $tab = self::getOption(Common2::OPTION_INDENT);
         }
         $lnEnd = self::getOption(Common2::OPTION_LINEBREAK);
-        if ($this->_useTGroups) {
+        if ($this->useTGroups) {
             $extraTab = $tab;
         } else {
             $extraTab = '';
         }
-        if ($this->_cols > 0) {
-            for ($i = 0; $i < $this->_rows; $i++) {
+        if ($this->cols > 0) {
+            for ($i = 0; $i < $this->rows; $i++) {
                 $attr = '';
-                if (isset($this->_structure[$i]['attr'])) {
-                    $attr = self::getAttributesString($this->_structure[$i]['attr']);
+                if (isset($this->structure[$i]['attr'])) {
+                    $attr = self::getAttributesString($this->structure[$i]['attr']);
                 }
                 $strHtml .= $tabs . $tab . $extraTab . '<tr' . $attr . '>' . $lnEnd;
-                for ($j = 0; $j < $this->_cols; $j++) {
+                for ($j = 0; $j < $this->cols; $j++) {
                     $attr     = [];
                     $contents = '';
                     $type     = 'td';
-                    if (isset($this->_structure[$i][$j]) && $this->_structure[$i][$j] == '__SPANNED__') {
+                    if (isset($this->structure[$i][$j]) && $this->structure[$i][$j] == '__SPANNED__') {
                         continue;
                     }
-                    if (isset($this->_structure[$i][$j]['type'])) {
-                        $type = (\strtolower($this->_structure[$i][$j]['type']) == 'th' ? 'th' : 'td');
+                    if (isset($this->structure[$i][$j]['type'])) {
+                        $type = (\strtolower($this->structure[$i][$j]['type']) == 'th' ? 'th' : 'td');
                     }
-                    if (isset($this->_structure[$i][$j]['attr'])) {
-                        $attr = $this->_structure[$i][$j]['attr'];
+                    if (isset($this->structure[$i][$j]['attr'])) {
+                        $attr = $this->structure[$i][$j]['attr'];
                     }
-                    if (isset($this->_structure[$i][$j]['contents'])) {
-                        $contents = $this->_structure[$i][$j]['contents'];
+                    if (isset($this->structure[$i][$j]['contents'])) {
+                        $contents = $this->structure[$i][$j]['contents'];
                     }
                     $strHtml .= $tabs . $tab . $tab . $extraTab . "<$type" . self::getAttributesString($attr) . '>';
                     if (is_object($contents)) {
@@ -1723,7 +1723,7 @@ class Storage extends Common2
                         if (is_subclass_of($contents, 'HtmlCommon2')) {
                             self::setOption(Common2::OPTION_INDENT, $tab . $extraTab);
                             $contents->setIndentLevel($this->getIndentLevel() + 3);
-                            $contents->_nestLevel = $this->_nestLevel + 1;
+                            $contents->nestLevel = $this->nestLevel + 1;
                             $contents->setLineEnd(self::getOption(Common2::OPTION_LINEBREAK));
                         }
                         if (method_exists($contents, 'toHtml')) {
@@ -1735,8 +1735,8 @@ class Storage extends Common2
                     if (is_array($contents)) {
                         $contents = \implode(', ', $contents);
                     }
-                    if (isset($this->_autoFill) && $contents === '') {
-                        $contents = $this->_autoFill;
+                    if (isset($this->autoFill) && $contents === '') {
+                        $contents = $this->autoFill;
                     }
                     $strHtml .= $contents;
                     $strHtml .= "</$type>" . $lnEnd;
@@ -1753,32 +1753,32 @@ class Storage extends Common2
      * @param    int        $col            Column index
      * @access   private
      */
-    private function _updateSpanGrid(int $row, int $col): void
+    private function updateSpanGrid(int $row, int $col): void
     {
-        if (isset($this->_structure[$row][$col]['attr']['colspan'])) {
-            $colspan = $this->_structure[$row][$col]['attr']['colspan'];
+        if (isset($this->structure[$row][$col]['attr']['colspan'])) {
+            $colspan = $this->structure[$row][$col]['attr']['colspan'];
         }
 
-        if (isset($this->_structure[$row][$col]['attr']['rowspan'])) {
-            $rowspan = $this->_structure[$row][$col]['attr']['rowspan'];
+        if (isset($this->structure[$row][$col]['attr']['rowspan'])) {
+            $rowspan = $this->structure[$row][$col]['attr']['rowspan'];
         }
 
         if (isset($colspan)) {
-            for ($j = $col + 1; (($j < $this->_cols) && ($j <= ($col + $colspan - 1))); $j++) {
-                $this->_structure[$row][$j] = '__SPANNED__';
+            for ($j = $col + 1; (($j < $this->cols) && ($j <= ($col + $colspan - 1))); $j++) {
+                $this->structure[$row][$j] = '__SPANNED__';
             }
         }
 
         if (isset($rowspan)) {
-            for ($i = $row + 1; (($i < $this->_rows) && ($i <= ($row + $rowspan - 1))); $i++) {
-                $this->_structure[$i][$col] = '__SPANNED__';
+            for ($i = $row + 1; (($i < $this->rows) && ($i <= ($row + $rowspan - 1))); $i++) {
+                $this->structure[$i][$col] = '__SPANNED__';
             }
         }
 
         if (isset($colspan) && isset($rowspan)) {
-            for ($i = $row + 1; (($i < $this->_rows) && ($i <= ($row + $rowspan - 1))); $i++) {
-                for ($j = $col + 1; (($j <= $this->_cols) && ($j <= ($col + $colspan - 1))); $j++) {
-                    $this->_structure[$i][$j] = '__SPANNED__';
+            for ($i = $row + 1; (($i < $this->rows) && ($i <= ($row + $rowspan - 1))); $i++) {
+                for ($j = $col + 1; (($j <= $this->cols) && ($j <= ($col + $colspan - 1))); $j++) {
+                    $this->structure[$i][$j] = '__SPANNED__';
                 }
             }
         }
@@ -1795,22 +1795,22 @@ class Storage extends Common2
     * @access   private
     * @throws   PEAR_Error
     */
-    private function _adjustEnds(int $row, int $col, string $method, array $attributes = array())
+    private function adjustEnds(int $row, int $col, string $method, array $attributes = array())
     {
         $colspan = isset($attributes['colspan']) ? $attributes['colspan'] : 1;
         $rowspan = isset($attributes['rowspan']) ? $attributes['rowspan'] : 1;
-        if (($row + $rowspan - 1) >= $this->_rows) {
-            if ($this->_autoGrow) {
-                $this->_rows = $row + $rowspan;
+        if (($row + $rowspan - 1) >= $this->rows) {
+            if ($this->autoGrow) {
+                $this->rows = $row + $rowspan;
             } else {
                 return PEAR::raiseError('Invalid table row reference[' .
                     $row . '] in HTML_Table::' . $method);
             }
         }
 
-        if (($col + $colspan - 1) >= $this->_cols) {
-            if ($this->_autoGrow) {
-                $this->_cols = $col + $colspan;
+        if (($col + $colspan - 1) >= $this->cols) {
+            if ($this->autoGrow) {
+                $this->cols = $col + $colspan;
             } else {
                 return PEAR::raiseError('Invalid table column reference[' .
                     $col . '] in HTML_Table::' . $method);
@@ -1824,7 +1824,7 @@ class Storage extends Common2
     * @access   private
     * @return   bool
     */
-    private function _isAttributesArray(string|array $attributes = null): bool
+    private function isAttributesArray(string|array $attributes = null): bool
     {
         if (is_array($attributes) && isset($attributes[0])) {
             if (\is_array($attributes[0]) || (\is_string($attributes[0]) && \count($attributes) > 1)) {
@@ -1837,13 +1837,13 @@ class Storage extends Common2
     public function keepAttributes(array $keep): void
     {
         for ($row = 0; $row < $this->getRowCount(); $row++) {
-            if (isset($this->_structure[$row]['attr'])) {
-                self::keepAttributesArray($this->_structure[$row]['attr'], $keep);
+            if (isset($this->structure[$row]['attr'])) {
+                self::keepAttributesArray($this->structure[$row]['attr'], $keep);
             }
 
             for ($col = 0; $col < $this->getColCount(); $col++) {
-                if (is_array($this->_structure[$row][$col])) {
-                    self::keepAttributesArray($this->_structure[$row][$col]['attr'], $keep);
+                if (is_array($this->structure[$row][$col])) {
+                    self::keepAttributesArray($this->structure[$row][$col]['attr'], $keep);
                 }
             }
         }

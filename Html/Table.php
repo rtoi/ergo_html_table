@@ -90,7 +90,7 @@ use PEAR;
  * @version    Release: @package_version@
  * @link       http://pear.php.net/package/HTML_Table
  */
- 
+
 class Table extends Common2
 {
     /**
@@ -99,7 +99,7 @@ class Table extends Common2
      * @var    string
      * @access private
      */
-    private string $_autoFill = '&nbsp;';
+    private string $autoFill = '&nbsp;';
 
     /**
      * Automatically adds a new row, column, or body if a given row, column, or
@@ -108,14 +108,14 @@ class Table extends Common2
      * @var    bool
      * @access private
      */
-    private bool $_autoGrow = true;
+    private bool $autoGrow = true;
 
     /**
      * Array containing the table caption
      * @var     array
      * @access  private
      */
-    private array $_caption = [];
+    private array $caption = [];
 
     /**
      * Array containing the table column group specifications
@@ -124,42 +124,42 @@ class Table extends Common2
      * @author  Laurent Laville (pear at laurent-laville dot org)
      * @access  private
      */
-    private array $_colgroup = [];
+    private array $colgroup = [];
 
     /**
      * Table\Storage object for the (t)head of the table
      * @var    object
      * @access private
      */
-    private ?Table\Storage $_thead = null;
+    private ?Table\Storage $thead = null;
 
     /**
      * Table\Storage object for the (t)foot of the table
      * @var    object
      * @access private
      */
-    private ?Table\Storage $_tfoot = null;
+    private ?Table\Storage $tfoot = null;
 
     /**
      * Table\Storage object for the (t)body of the table
      * @var    array of Table\Storage objects
      * @access private
      */
-    private array $_tbodies = [];
+    private array $tbodies = [];
 
     /**
      * Number of bodies in the table
      * @var    int
      * @access private
      */
-    private int $_tbodyCount = 0;
+    private int $tbodyCount = 0;
 
     /**
      * Whether to use <thead>, <tfoot> and <tbody> or not
      * @var    bool
      * @access private
      */
-    private bool $_useTGroups = false;
+    private bool $useTGroups = false;
 
     /**
      * Class constructor
@@ -174,11 +174,11 @@ class Table extends Common2
     {
         parent::__construct($attributes);
         $this->setIndentLevel($tabOffset);
-        $this->_useTGroups = $useTGroups;
+        $this->useTGroups = $useTGroups;
         $this->addBody();
-        if ($this->_useTGroups) {
-            $this->_thead = new Table\Storage($tabOffset, $this->_useTGroups);
-            $this->_tfoot = new Table\Storage($tabOffset, $this->_useTGroups);
+        if ($this->useTGroups) {
+            $this->thead = new Table\Storage($tabOffset, $this->useTGroups);
+            $this->tfoot = new Table\Storage($tabOffset, $this->useTGroups);
         }
     }
 
@@ -200,17 +200,17 @@ class Table extends Common2
      */
     public function getHeader(bool $add = \true): ?Table\Storage
     {
-        if (is_null($this->_thead) && $add) {
-            $this->_useTGroups = true;
-            $this->_thead = new Table\Storage(
+        if (is_null($this->thead) && $add) {
+            $this->useTGroups = true;
+            $this->thead = new Table\Storage(
                 $this->getIndentLevel(),
-                $this->_useTGroups
+                $this->useTGroups
             );
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->setUseTGroups(true);
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->setUseTGroups(true);
             }
         }
-        return $this->_thead;
+        return $this->thead;
     }
 
     /**
@@ -220,17 +220,17 @@ class Table extends Common2
      */
     public function getFooter(bool $add = \true): ?Table\Storage
     {
-        if (is_null($this->_tfoot) && $add) {
-            $this->_useTGroups = true;
-            $this->_tfoot = new Table\Storage(
+        if (is_null($this->tfoot) && $add) {
+            $this->useTGroups = true;
+            $this->tfoot = new Table\Storage(
                 $this->getIndentLevel(),
-                $this->_useTGroups
+                $this->useTGroups
             );
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->setUseTGroups(true);
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->setUseTGroups(true);
             }
         }
-        return $this->_tfoot;
+        return $this->tfoot;
     }
 
     /**
@@ -244,11 +244,11 @@ class Table extends Common2
      */
     public function getBody($body = 0): Table\Storage
     {
-        $ret = $this->_adjustTbodyCount($body, 'getBody');
+        $ret = $this->adjustTbodyCount($body, 'getBody');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        return $this->_tbodies[$body];
+        return $this->tbodies[$body];
     }
 
     /**
@@ -260,20 +260,20 @@ class Table extends Common2
      */
     public function addBody(string|array $attributes = null): int
     {
-        if (!$this->_useTGroups && $this->_tbodyCount > 0) {
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->setUseTGroups(true);
+        if (!$this->useTGroups && $this->tbodyCount > 0) {
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->setUseTGroups(true);
             }
-            $this->_useTGroups = true;
+            $this->useTGroups = true;
         }
 
-        $body = $this->_tbodyCount++;
-        $this->_tbodies[$body] = new Table\Storage(
+        $body = $this->tbodyCount++;
+        $this->tbodies[$body] = new Table\Storage(
             $this->getIndentLevel(),
-            $this->_useTGroups
+            $this->useTGroups
         );
-        $this->_tbodies[$body]->setAutoFill($this->_autoFill);
-        $this->_tbodies[$body]->setAttributes($attributes);
+        $this->tbodies[$body]->setAutoFill($this->autoFill);
+        $this->tbodies[$body]->setAttributes($attributes);
         return $body;
     }
 
@@ -284,10 +284,10 @@ class Table extends Common2
      * @access  private
      * @throws  PEAR_Error
      */
-    private function _adjustTbodyCount(int $body, string $method)
+    private function adjustTbodyCount(int $body, string $method)
     {
-        if ($this->_autoGrow) {
-            while ($this->_tbodyCount <= $body) {
+        if ($this->autoGrow) {
+            while ($this->tbodyCount <= $body) {
                 $this->addBody();
             }
         } else {
@@ -306,7 +306,7 @@ class Table extends Common2
     public function setCaption(string $caption, string|array $attributes = null): void
     {
         $attributes = self::prepareAttributes($attributes);
-        $this->_caption = array('attr' => $attributes, 'contents' => $caption);
+        $this->caption = array('attr' => $attributes, 'contents' => $caption);
     }
 
     /**
@@ -322,16 +322,16 @@ class Table extends Common2
     {
         if (isset($colgroup)) {
             $attributes = self::prepareAttributes($attributes);
-            $this->_colgroup[] = array('attr' => $attributes,
+            $this->colgroup[] = array('attr' => $attributes,
                                        'contents' => $colgroup);
         } else {
-            $this->_colgroup = array();
+            $this->colgroup = array();
         }
     }
 
     /**
      * Inserts a new col in a colgroup.
-     * 
+     *
      * @param int|null  $col        At what index the col will be inserted. If this is not set, the new
      *                              coll will be added at the end of the colgroup.
      * @param array     $contents
@@ -342,17 +342,17 @@ class Table extends Common2
     public function insertCol(?int $col = null, array $contents = [''], int $groupId = 0): void
     {
         if (!isset($col)) {
-            $this->_colgroup[$groupId]['contents'][] = $contents;
+            $this->colgroup[$groupId]['contents'][] = $contents;
             return;
         }
-        $arr1 = $col > 0 ? array_slice($this->_colgroup[$groupId]['contents'], 0, $col) : [];
-        $arr2 = $col < $this->getColCount() ? array_slice($this->_colgroup[$groupId]['contents'], $col) : [];
-        $this->_colgroup[$groupId]['contents'] = array_merge($arr1, $contents, $arr2);
+        $arr1 = $col > 0 ? array_slice($this->colgroup[$groupId]['contents'], 0, $col) : [];
+        $arr2 = $col < $this->getColCount() ? array_slice($this->colgroup[$groupId]['contents'], $col) : [];
+        $this->colgroup[$groupId]['contents'] = array_merge($arr1, $contents, $arr2);
     }
 
     public function getColGroup(): array
     {
-        return $this->_colgroup ?? [];
+        return $this->colgroup ?? [];
     }
 
     /**
@@ -366,15 +366,15 @@ class Table extends Common2
     public function setAutoFill(string $fill, int $body = null)
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'setAutoFill');
+            $ret = $this->adjustTbodyCount($body, 'setAutoFill');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            $this->_tbodies[$body]->setAutoFill($fill);
+            $this->tbodies[$body]->setAutoFill($fill);
         } else {
-            $this->_autoFill = $fill;
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->setAutoFill($fill);
+            $this->autoFill = $fill;
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->setAutoFill($fill);
             }
         }
     }
@@ -390,13 +390,13 @@ class Table extends Common2
     public function getAutoFill($body = null): string
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'getAutoFill');
+            $ret = $this->adjustTbodyCount($body, 'getAutoFill');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            return $this->_tbodies[$body]->getAutoFill();
+            return $this->tbodies[$body]->getAutoFill();
         }
-        return $this->_autoFill;
+        return $this->autoFill;
     }
 
     /**
@@ -410,15 +410,15 @@ class Table extends Common2
     public function setAutoGrow(bool $grow, int $body = null)
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'setAutoGrow');
+            $ret = $this->adjustTbodyCount($body, 'setAutoGrow');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            $this->_tbodies[$body]->setAutoGrow($grow);
+            $this->tbodies[$body]->setAutoGrow($grow);
         } else {
-            $this->_autoGrow = $grow;
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->setAutoGrow($grow);
+            $this->autoGrow = $grow;
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->setAutoGrow($grow);
             }
         }
     }
@@ -434,13 +434,13 @@ class Table extends Common2
     public function getAutoGrow(int $body = null): bool
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'getAutoGrow');
+            $ret = $this->adjustTbodyCount($body, 'getAutoGrow');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            return $this->_tbodies[$body]->getAutoGrow();
+            return $this->tbodies[$body]->getAutoGrow();
         }
-        return $this->_autoGrow;
+        return $this->autoGrow;
     }
 
     /**
@@ -452,11 +452,11 @@ class Table extends Common2
      */
     public function setRowCount(int $rows, int $body = 0)
     {
-        $ret = $this->_adjustTbodyCount($body, 'setRowCount');
+        $ret = $this->adjustTbodyCount($body, 'setRowCount');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $this->_tbodies[$body]->setRowCount($rows);
+        $this->tbodies[$body]->setRowCount($rows);
     }
 
     /**
@@ -468,11 +468,11 @@ class Table extends Common2
      */
     public function setColCount(int $cols, int $body = 0)
     {
-        $ret = $this->_adjustTbodyCount($body, 'setColCount');
+        $ret = $this->adjustTbodyCount($body, 'setColCount');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $this->_tbodies[$body]->setColCount($cols);
+        $this->tbodies[$body]->setColCount($cols);
     }
 
     /**
@@ -487,15 +487,15 @@ class Table extends Common2
     public function getRowCount(int $body = null): int
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'getRowCount');
+            $ret = $this->adjustTbodyCount($body, 'getRowCount');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            return $this->_tbodies[$body]->getRowCount();
+            return $this->tbodies[$body]->getRowCount();
         }
         $rowCount = 0;
-        for ($i = 0; $i < $this->_tbodyCount; $i++) {
-            $rowCount += $this->_tbodies[$i]->getRowCount();
+        for ($i = 0; $i < $this->tbodyCount; $i++) {
+            $rowCount += $this->tbodies[$i]->getRowCount();
         }
         return $rowCount;
     }
@@ -514,11 +514,11 @@ class Table extends Common2
      */
     public function getColCount(int $row = null, int $body = 0): int
     {
-        $ret = $this->_adjustTbodyCount($body, 'getColCount');
+        $ret = $this->adjustTbodyCount($body, 'getColCount');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        return $this->_tbodies[$body]->getColCount($row);
+        return $this->tbodies[$body]->getColCount($row);
     }
 
     /**
@@ -531,11 +531,11 @@ class Table extends Common2
      */
     public function setRowType(int $row, string $type, int $body = 0)
     {
-        $ret = $this->_adjustTbodyCount($body, 'setRowType');
+        $ret = $this->adjustTbodyCount($body, 'setRowType');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $this->_tbodies[$body]->setRowType($row, $type);
+        $this->tbodies[$body]->setRowType($row, $type);
     }
 
     /**
@@ -550,14 +550,14 @@ class Table extends Common2
     public function setColType(int $col, string $type, int $body = null)
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'setColType');
+            $ret = $this->adjustTbodyCount($body, 'setColType');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            $this->_tbodies[$body]->setColType($col, $type);
+            $this->tbodies[$body]->setColType($col, $type);
         } else {
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->setColType($col, $type);
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->setColType($col, $type);
             }
         }
     }
@@ -578,11 +578,11 @@ class Table extends Common2
      */
     public function setCellAttributes(int $row, int $col, string|array $attributes = null, int $body = 0)
     {
-        $ret = $this->_adjustTbodyCount($body, 'setCellAttributes');
+        $ret = $this->adjustTbodyCount($body, 'setCellAttributes');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $ret = $this->_tbodies[$body]->setCellAttributes($row, $col, $attributes);
+        $ret = $this->tbodies[$body]->setCellAttributes($row, $col, $attributes);
         if (PEAR::isError($ret)) {
             return $ret;
         }
@@ -601,11 +601,11 @@ class Table extends Common2
      */
     public function updateCellAttributes(int $row, int $col, string|array $attributes = null, int $body = 0)
     {
-        $ret = $this->_adjustTbodyCount($body, 'updateCellAttributes');
+        $ret = $this->adjustTbodyCount($body, 'updateCellAttributes');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $ret = $this->_tbodies[$body]->updateCellAttributes($row, $col, $attributes);
+        $ret = $this->tbodies[$body]->updateCellAttributes($row, $col, $attributes);
         if (PEAR::isError($ret)) {
             return $ret;
         }
@@ -622,11 +622,11 @@ class Table extends Common2
      */
     public function getCellAttributes(int $row, int $col, int $body = 0)
     {
-        $ret = $this->_adjustTbodyCount($body, 'getCellAttributes');
+        $ret = $this->adjustTbodyCount($body, 'getCellAttributes');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        return $this->_tbodies[$body]->getCellAttributes($row, $col);
+        return $this->tbodies[$body]->getCellAttributes($row, $col);
     }
 
     /**
@@ -650,11 +650,11 @@ class Table extends Common2
      */
     public function setCellContents(int $row, int $col, $contents, string $type = 'TD', int $body = 0)
     {
-        $ret = $this->_adjustTbodyCount($body, 'setCellContents');
+        $ret = $this->adjustTbodyCount($body, 'setCellContents');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $ret = $this->_tbodies[$body]->setCellContents($row, $col, $contents, $type);
+        $ret = $this->tbodies[$body]->setCellContents($row, $col, $contents, $type);
         if (PEAR::isError($ret)) {
             return $ret;
         }
@@ -671,11 +671,11 @@ class Table extends Common2
      */
     public function getCellContents(int $row, int $col, int $body = 0)
     {
-        $ret = $this->_adjustTbodyCount($body, 'getCellContents');
+        $ret = $this->adjustTbodyCount($body, 'getCellContents');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        return $this->_tbodies[$body]->getCellContents($row, $col);
+        return $this->tbodies[$body]->getCellContents($row, $col);
     }
 
     /**
@@ -696,11 +696,11 @@ class Table extends Common2
         string|array $attributes = null,
         int $body = 0
     ) {
-        $ret = $this->_adjustTbodyCount($body, 'setHeaderContents');
+        $ret = $this->adjustTbodyCount($body, 'setHeaderContents');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $this->_tbodies[$body]->setHeaderContents($row, $col, $contents, $attributes);
+        $this->tbodies[$body]->setHeaderContents($row, $col, $contents, $attributes);
     }
 
     /**
@@ -728,11 +728,11 @@ class Table extends Common2
         bool $inTR = false,
         int $body = 0
     ) {
-        $ret = $this->_adjustTbodyCount($body, 'addRow');
+        $ret = $this->adjustTbodyCount($body, 'addRow');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $ret = $this->_tbodies[$body]->addRow($contents, $attributes, $type, $inTR);
+        $ret = $this->tbodies[$body]->addRow($contents, $attributes, $type, $inTR);
         return $ret;
     }
 
@@ -752,11 +752,11 @@ class Table extends Common2
      */
     public function setRowAttributes(int $row, string|array $attributes = null, bool $inTR = false, int $body = 0)
     {
-        $ret = $this->_adjustTbodyCount($body, 'setRowAttributes');
+        $ret = $this->adjustTbodyCount($body, 'setRowAttributes');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $ret = $this->_tbodies[$body]->setRowAttributes($row, $attributes, $inTR);
+        $ret = $this->tbodies[$body]->setRowAttributes($row, $attributes, $inTR);
         if (PEAR::isError($ret)) {
             return $ret;
         }
@@ -780,11 +780,11 @@ class Table extends Common2
         bool $inTR = false,
         int $body = 0
     ) {
-        $ret = $this->_adjustTbodyCount($body, 'updateRowAttributes');
+        $ret = $this->adjustTbodyCount($body, 'updateRowAttributes');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        $ret = $this->_tbodies[$body]->updateRowAttributes($row, $attributes, $inTR);
+        $ret = $this->tbodies[$body]->updateRowAttributes($row, $attributes, $inTR);
         if (PEAR::isError($ret)) {
             return $ret;
         }
@@ -800,11 +800,11 @@ class Table extends Common2
      */
     public function getRowAttributes(int $row, int $body = 0): array
     {
-        $ret = $this->_adjustTbodyCount($body, 'getRowAttributes');
+        $ret = $this->adjustTbodyCount($body, 'getRowAttributes');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        return $this->_tbodies[$body]->getRowAttributes($row);
+        return $this->tbodies[$body]->getRowAttributes($row);
     }
 
     /**
@@ -834,11 +834,11 @@ class Table extends Common2
         int $body = null
     ) {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'altRowAttributes');
+            $ret = $this->adjustTbodyCount($body, 'altRowAttributes');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            $this->_tbodies[$body]->altRowAttributes(
+            $this->tbodies[$body]->altRowAttributes(
                 $start,
                 $attributes1,
                 $attributes2,
@@ -846,8 +846,8 @@ class Table extends Common2
                 $firstAttributes
             );
         } else {
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->altRowAttributes(
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->altRowAttributes(
                     $start,
                     $attributes1,
                     $attributes2,
@@ -857,7 +857,7 @@ class Table extends Common2
                 // if the tbody's row count is odd, toggle $firstAttributes to
                 // prevent the next tbody's first row from having the same
                 // attributes as this tbody's last row.
-                if ($this->_tbodies[$i]->getRowCount() % 2) {
+                if ($this->tbodies[$i]->getRowCount() % 2) {
                     $firstAttributes ^= 3;
                 }
             }
@@ -882,11 +882,11 @@ class Table extends Common2
         string $type = 'td',
         int $body = 0
     ) {
-        $ret = $this->_adjustTbodyCount($body, 'addCol');
+        $ret = $this->adjustTbodyCount($body, 'addCol');
         if (PEAR::isError($ret)) {
             return $ret;
         }
-        return $this->_tbodies[$body]->addCol($contents, $attributes, $type);
+        return $this->tbodies[$body]->addCol($contents, $attributes, $type);
     }
 
     /**
@@ -902,14 +902,14 @@ class Table extends Common2
     public function setColAttributes(int $col, string|array $attributes = null, int $body = null)
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'setColAttributes');
+            $ret = $this->adjustTbodyCount($body, 'setColAttributes');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            $this->_tbodies[$body]->setColAttributes($col, $attributes);
+            $this->tbodies[$body]->setColAttributes($col, $attributes);
         } else {
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->setColAttributes($col, $attributes);
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->setColAttributes($col, $attributes);
             }
         }
     }
@@ -927,14 +927,14 @@ class Table extends Common2
     public function updateColAttributes(int $col, string|array $attributes = null, int $body = null)
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'updateColAttributes');
+            $ret = $this->adjustTbodyCount($body, 'updateColAttributes');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            $this->_tbodies[$body]->updateColAttributes($col, $attributes);
+            $this->tbodies[$body]->updateColAttributes($col, $attributes);
         } else {
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->updateColAttributes($col, $attributes);
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->updateColAttributes($col, $attributes);
             }
         }
     }
@@ -951,14 +951,14 @@ class Table extends Common2
     public function setAllAttributes(string|array $attributes = null, int $body = null)
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'setAllAttributes');
+            $ret = $this->adjustTbodyCount($body, 'setAllAttributes');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            $this->_tbodies[$body]->setAllAttributes($attributes);
+            $this->tbodies[$body]->setAllAttributes($attributes);
         } else {
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->setAllAttributes($attributes);
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->setAllAttributes($attributes);
             }
         }
     }
@@ -975,14 +975,14 @@ class Table extends Common2
     public function updateAllAttributes(string|array $attributes = null, int $body = null)
     {
         if (!is_null($body)) {
-            $ret = $this->_adjustTbodyCount($body, 'updateAllAttributes');
+            $ret = $this->adjustTbodyCount($body, 'updateAllAttributes');
             if (PEAR::isError($ret)) {
                 return $ret;
             }
-            $this->_tbodies[$body]->updateAllAttributes($attributes);
+            $this->tbodies[$body]->updateAllAttributes($attributes);
         } else {
-            for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                $this->_tbodies[$i]->updateAllAttributes($attributes);
+            for ($i = 0; $i < $this->tbodyCount; $i++) {
+                $this->tbodies[$i]->updateAllAttributes($attributes);
             }
         }
     }
@@ -999,8 +999,8 @@ class Table extends Common2
         $tab = self::getOption(Common2::OPTION_INDENT);
         $lnEnd = self::getOption(Common2::OPTION_LINEBREAK);
         $tBodyColCounts = array();
-        for ($i = 0; $i < $this->_tbodyCount; $i++) {
-            $tBodyColCounts[] = $this->_tbodies[$i]->getColCount();
+        for ($i = 0; $i < $this->tbodyCount; $i++) {
+            $tBodyColCounts[] = $this->tbodies[$i]->getColCount();
         }
         $tBodyMaxColCount = 0;
         if (count($tBodyColCounts) > 0) {
@@ -1012,9 +1012,9 @@ class Table extends Common2
         if ($this->getRowCount() > 0 && $tBodyMaxColCount > 0) {
             $strHtml .=
                 $tabs . '<table' . $this->getAttributes(true) . '>' . $lnEnd;
-            if (!empty($this->_caption)) {
-                $attr = $this->_caption['attr'];
-                $contents = $this->_caption['contents'];
+            if (!empty($this->caption)) {
+                $attr = $this->caption['attr'];
+                $contents = $this->caption['contents'];
                 $strHtml .= $tabs . $tab . '<caption' . self::getAttributesString($attr) . '>';
                 if (is_array($contents)) {
                     $contents = implode(', ', $contents);
@@ -1022,10 +1022,10 @@ class Table extends Common2
                 $strHtml .= $contents;
                 $strHtml .= '</caption>' . $lnEnd;
             }
-            if (!empty($this->_colgroup)) {
-                foreach ($this->_colgroup as $g => $col) {
-                    $attr = $this->_colgroup[$g]['attr'];
-                    $contents = $this->_colgroup[$g]['contents'];
+            if (!empty($this->colgroup)) {
+                foreach ($this->colgroup as $g => $col) {
+                    $attr = $this->colgroup[$g]['attr'];
+                    $contents = $this->colgroup[$g]['contents'];
                     $strHtml .= $tabs . $tab . '<colgroup' . self::getAttributesString($attr) . '>';
                     if (!empty($contents)) {
                         $strHtml .= $lnEnd;
@@ -1041,49 +1041,49 @@ class Table extends Common2
                     $strHtml .= '</colgroup>' . $lnEnd;
                 }
             }
-            if ($this->_useTGroups) {
+            if ($this->useTGroups) {
                 $tHeadColCount = 0;
-                if ($this->_thead !== null) {
-                    $tHeadColCount = $this->_thead->getColCount();
+                if ($this->thead !== null) {
+                    $tHeadColCount = $this->thead->getColCount();
                 }
                 $tFootColCount = 0;
-                if ($this->_tfoot !== null) {
-                    $tFootColCount = $this->_tfoot->getColCount();
+                if ($this->tfoot !== null) {
+                    $tFootColCount = $this->tfoot->getColCount();
                 }
                 $maxColCount = max($tHeadColCount, $tFootColCount, $tBodyMaxColCount);
-                if ($this->_thead !== null) {
-                    $this->_thead->setColCount($maxColCount);
-                    if ($this->_thead->getRowCount() > 0) {
+                if ($this->thead !== null) {
+                    $this->thead->setColCount($maxColCount);
+                    if ($this->thead->getRowCount() > 0) {
                         $strHtml .= $tabs . $tab . '<thead' .
-                                    $this->_thead->getAttributes(true) .
+                                    $this->thead->getAttributes(true) .
                                     '>' . $lnEnd;
-                        $strHtml .= $this->_thead->toHtml($tabs, $tab);
+                        $strHtml .= $this->thead->toHtml($tabs, $tab);
                         $strHtml .= $tabs . $tab . '</thead>' . $lnEnd;
                     }
                 }
-                if ($this->_tfoot !== null) {
-                    $this->_tfoot->setColCount($maxColCount);
-                    if ($this->_tfoot->getRowCount() > 0) {
+                if ($this->tfoot !== null) {
+                    $this->tfoot->setColCount($maxColCount);
+                    if ($this->tfoot->getRowCount() > 0) {
                         $strHtml .= $tabs . $tab . '<tfoot' .
-                                    $this->_tfoot->getAttributes(true) .
+                                    $this->tfoot->getAttributes(true) .
                                     '>' . $lnEnd;
-                        $strHtml .= $this->_tfoot->toHtml($tabs, $tab);
+                        $strHtml .= $this->tfoot->toHtml($tabs, $tab);
                         $strHtml .= $tabs . $tab . '</tfoot>' . $lnEnd;
                     }
                 }
-                for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                    $this->_tbodies[$i]->setColCount($maxColCount);
-                    if ($this->_tbodies[$i]->getRowCount() > 0) {
+                for ($i = 0; $i < $this->tbodyCount; $i++) {
+                    $this->tbodies[$i]->setColCount($maxColCount);
+                    if ($this->tbodies[$i]->getRowCount() > 0) {
                         $strHtml .= $tabs . $tab . '<tbody' .
-                                    $this->_tbodies[$i]->getAttributes(true) .
+                                    $this->tbodies[$i]->getAttributes(true) .
                                     '>' . $lnEnd;
-                        $strHtml .= $this->_tbodies[$i]->toHtml($tabs, $tab);
+                        $strHtml .= $this->tbodies[$i]->toHtml($tabs, $tab);
                         $strHtml .= $tabs . $tab . '</tbody>' . $lnEnd;
                     }
                 }
             } else {
-                for ($i = 0; $i < $this->_tbodyCount; $i++) {
-                    $strHtml .= $this->_tbodies[$i]->toHtml($tabs, $tab);
+                for ($i = 0; $i < $this->tbodyCount; $i++) {
+                    $strHtml .= $this->tbodies[$i]->toHtml($tabs, $tab);
                 }
             }
             $strHtml .= $tabs . '</table>' . $lnEnd;
