@@ -2,9 +2,9 @@
 
 /* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
-namespace Sjweh\Html\Table;
+namespace Ergo\Html\Table;
 
-use Sjweh\Html\Common2;
+use Ergo\Html\Common2;
 use PEAR;
 
 /**

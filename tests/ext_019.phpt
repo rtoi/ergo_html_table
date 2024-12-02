@@ -5,7 +5,7 @@ ext_019.phpt: Tests HTML_Table_Storage::keepAttributes
 // $Id$
 require_once 'vendor/autoload.php';
 
-$table = new \Sjweh\Html\Table();
+$table = new \Ergo\Html\Table();
 $storage = $table->getBody();
 
 $storage->addRow(['A', 'B'], 'style = "background-color:yellow;" align = "right"');

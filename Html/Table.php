@@ -1,6 +1,6 @@
 <?php
 
-namespace Sjweh\Html;
+namespace Ergo\Html;
 
 use PEAR;
 

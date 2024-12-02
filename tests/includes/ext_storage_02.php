@@ -1,7 +1,7 @@
 <?php
 
 if (!isset($storage)) {
-    $storage = new \Sjweh\Html\Table\Storage();
+    $storage = new \Ergo\Html\Table\Storage();
 }
 
 $data = [];

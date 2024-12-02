@@ -4,7 +4,7 @@
 <?php
 // $Id$
 require_once 'vendor/autoload.php';
-$table = new \Sjweh\Html\Table('width="400"');
+$table = new \Ergo\Html\Table('width="400"');
 
 $thead = $table->getHeader();
 $tfoot = $table->getFooter();

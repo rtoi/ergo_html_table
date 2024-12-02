@@ -4,7 +4,7 @@
 <?php
 // $Id$
 require_once 'vendor/autoload.php';
-$table = new \Sjweh\Html\Table();
+$table = new \Ergo\Html\Table();
 
 $colgroup = array('style="font-size: 120%;"', 'class="col2"', 'align="right"');
 $attributes = 'span="3" class="group1"';
