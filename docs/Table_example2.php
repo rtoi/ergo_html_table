@@ -4,11 +4,11 @@
 * This example will output html websafe colors in a table
 * using HTML_Table.
 */
-// $Id$
 
-require_once 'HTML/Table.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
-$table = new HTML_Table('width = "100%"');
+$table = new Ergo\Html\Table('width = "100%"');
+
 $table->setCaption('256 colors table');
 $i = $j = 0;
 for ($R = 0; $R <= 255; $R += 51) {
@@ -22,4 +22,3 @@ for ($R = 0; $R <= 255; $R += 51) {
 	$j = 0;
 }
 echo $table->toHtml();
-?>

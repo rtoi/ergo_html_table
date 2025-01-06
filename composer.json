@@ -24,10 +24,10 @@
             "name": "Mark Wiesemann",
             "role": "Lead"
         },
-	{
-	   "email" : "risto@ergonomiapalvelu.fi",
-           "name"  : "Risto Toivonen"
-	}
+        {
+           "email" : "risto@ergonomiapalvelu.fi",
+               "name"  : "Risto Toivonen"
+        }
     ],
     "autoload": {
         "psr-4": { "Ergo\\Html\\" : "Html/" }
