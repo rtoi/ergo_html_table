@@ -184,6 +184,7 @@ class Table extends Common2
 
     /**
      * Returns the API version
+
      * @access  public
      * @return  double
      * @deprecated
@@ -375,6 +376,12 @@ class Table extends Common2
             $this->autoFill = $fill;
             for ($i = 0; $i < $this->tbodyCount; $i++) {
                 $this->tbodies[$i]->setAutoFill($fill);
+            }
+            if ($this->thead) {
+                $this->thead->setAutoFill($fill);
+            }
+            if ($this->tfoot) {
+                $this->tfoot->setAutoFill($fill);
             }
         }
     }
